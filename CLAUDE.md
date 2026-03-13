@@ -1,4 +1,4 @@
-# Airtable to Markdown Project Guidelines
+# Paste to Markdown Project Guidelines
 
 ## Build & Development Commands
 - **Run development server:** Open `index.html` directly in a browser
