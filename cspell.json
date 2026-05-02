@@ -2,7 +2,25 @@
   "version": "0.2",
   "language": "en",
   "words": [
-    "Airtable"
+    "Airtable",
+    "artefacts",
+    "blockquotes",
+    "Confluence",
+    "cspell",
+    "fixturesDir",
+    "indentLevel",
+    "jsdom",
+    "markdownify",
+    "Pandoc",
+    "Prism",
+    "Quill",
+    "rowspan",
+    "strikethrough",
+    "Turndown",
+    "vitest"
   ],
-  "ignorePaths": []
-} 
+  "ignorePaths": [
+    "node_modules/**",
+    "package-lock.json"
+  ]
+}

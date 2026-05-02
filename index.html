@@ -324,14 +324,20 @@
     function convertToMarkdown(htmlContent) {
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = htmlContent;
-      return convertNodeToMarkdown(tempDiv).trim();
+      return convertNodeToMarkdown(tempDiv).replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    // Escape characters that would otherwise be parsed as Markdown formatting.
+    // Conservative set: chars that are inline-meaningful in any position.
+    function escapeMarkdown(text) {
+      return text.replace(/([\\`*_\[\]~])/g, '\\$1');
     }
 
     // Recursively convert a node to Markdown.
     function convertNodeToMarkdown(node, indentLevel = 0, listIndex = null) {
       let markdown = "";
       if (node.nodeType === Node.TEXT_NODE) {
-        return node.textContent;
+        return escapeMarkdown(node.textContent);
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         const tag = node.tagName.toLowerCase();
         switch (tag) {
@@ -341,6 +347,12 @@
             return "## " + getInnerMarkdown(node, indentLevel) + "\n\n";
           case 'h3':
             return "### " + getInnerMarkdown(node, indentLevel) + "\n\n";
+          case 'h4':
+            return "#### " + getInnerMarkdown(node, indentLevel) + "\n\n";
+          case 'h5':
+            return "##### " + getInnerMarkdown(node, indentLevel) + "\n\n";
+          case 'h6':
+            return "###### " + getInnerMarkdown(node, indentLevel) + "\n\n";
           case 'strong':
           case 'b':
             return "**" + getInnerMarkdown(node, indentLevel) + "**";
@@ -358,11 +370,27 @@
           }
           case 's':
           case 'strike':
+          case 'del':
             return "~~" + getInnerMarkdown(node, indentLevel) + "~~";
+          case 'mark':
+            return "<mark>" + getInnerMarkdown(node, indentLevel) + "</mark>";
+          case 'sub':
+            return "<sub>" + getInnerMarkdown(node, indentLevel) + "</sub>";
+          case 'sup':
+            return "<sup>" + getInnerMarkdown(node, indentLevel) + "</sup>";
           case 'code':
             return "`" + node.textContent + "`";
-          case 'pre':
-            return "```\n" + node.textContent + "\n```\n\n";
+          case 'pre': {
+            // Language hint: data-language (Notion) or class="language-xyz" (Prism)
+            let lang = node.getAttribute('data-language') || '';
+            if (!lang) {
+              const codeChild = node.querySelector('code');
+              const target = codeChild || node;
+              const langClass = Array.from(target.classList).find(c => c.startsWith('language-'));
+              if (langClass) lang = langClass.slice(9);
+            }
+            return "```" + lang + "\n" + node.textContent + "\n```\n\n";
+          }
           case 'blockquote': {
             const blockquoteContent = getInnerMarkdown(node, indentLevel);
             return blockquoteContent.split('\n')
@@ -422,10 +450,46 @@
             const href = node.getAttribute("href") || "";
             return "[" + getInnerMarkdown(node, indentLevel) + "](" + href + ")";
           }
+          case 'img': {
+            const src = node.getAttribute("src") || "";
+            const alt = node.getAttribute("alt") || "";
+            const title = node.getAttribute("title");
+            if (!src) return "";
+            return title ? "![" + alt + "](" + src + " \"" + title + "\")" : "![" + alt + "](" + src + ")";
+          }
+          case 'hr':
+            return "\n---\n\n";
           case 'br':
             return "\n";
           case 'p':
             return getInnerMarkdown(node, indentLevel) + "\n\n";
+          case 'table': {
+            const allRows = Array.from(node.querySelectorAll('tr'));
+            if (allRows.length === 0) return "";
+            const theadRows = Array.from(node.querySelectorAll('thead tr'));
+            let headerRow, bodyRows;
+            if (theadRows.length > 0) {
+              headerRow = theadRows[0];
+              bodyRows = allRows.filter(r => !theadRows.includes(r));
+            } else {
+              headerRow = allRows[0];
+              bodyRows = allRows.slice(1);
+            }
+            const cellsOf = (tr) => Array.from(tr.children).filter(c => /^t[hd]$/i.test(c.tagName));
+            const renderRow = (tr) => {
+              const cells = cellsOf(tr);
+              return "| " + cells.map(cell => {
+                const inner = getInnerMarkdown(cell, 0).trim().replace(/\|/g, '\\|').replace(/\n+/g, ' ');
+                return inner || ' ';
+              }).join(" | ") + " |";
+            };
+            const colCount = cellsOf(headerRow).length;
+            if (colCount === 0) return "";
+            let table = renderRow(headerRow) + "\n";
+            table += "|" + " --- |".repeat(colCount) + "\n";
+            bodyRows.forEach(tr => { table += renderRow(tr) + "\n"; });
+            return "\n" + table + "\n";
+          }
           case 'span': {
             let text = getInnerMarkdown(node, indentLevel);
             // Check classes for formatting

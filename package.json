@@ -1,0 +1,17 @@
+{
+  "name": "paste-to-markdown",
+  "private": true,
+  "description": "Tests + lint scaffolding. The site itself stays a single self-contained index.html.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:spell": "cspell \"**/*.{html,js,md,json}\"",
+    "lint:html": "html-validate index.html"
+  },
+  "devDependencies": {
+    "cspell": "^8.0.0",
+    "html-validate": "^8.0.0",
+    "jsdom": "^24.0.0",
+    "vitest": "^1.6.0"
+  }
+}
