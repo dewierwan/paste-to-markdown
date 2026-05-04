@@ -9,14 +9,19 @@ const indexPath = resolve(__dirname, '..', 'index.html');
 const fixturesDir = resolve(__dirname, 'fixtures');
 
 let convertToMarkdown;
+let stripImages;
 
 beforeAll(() => {
   const html = readFileSync(indexPath, 'utf-8');
   const virtualConsole = new VirtualConsole();
   const dom = new JSDOM(html, { runScripts: 'dangerously', virtualConsole });
   convertToMarkdown = dom.window.convertToMarkdown;
+  stripImages = dom.window.stripImages;
   if (typeof convertToMarkdown !== 'function') {
     throw new Error('convertToMarkdown not found on JSDOM window — index.html script may have failed to execute.');
+  }
+  if (typeof stripImages !== 'function') {
+    throw new Error('stripImages not found on JSDOM window.');
   }
 });
 
@@ -189,4 +194,47 @@ describe('fixtures', () => {
       });
     }
   }
+});
+
+describe('stripImages', () => {
+  it('strips Google Docs base64 reference defs', () => {
+    const input = 'before\n![][image1]\nafter\n\n[image1]: <data:image/png;base64,iVBORw0KGgo>';
+    const out = stripImages(input);
+    expect(out).not.toContain('data:image');
+    expect(out).not.toContain('![');
+    expect(out).toContain('before');
+    expect(out).toContain('after');
+  });
+
+  it('strips inline data: images with no leftover base64', () => {
+    const out = stripImages('x ![alt](data:image/png;base64,XYZ123) y');
+    expect(out).not.toContain('XYZ123');
+    expect(out).not.toContain('data:image');
+    expect(out).not.toContain('![');
+  });
+
+  it('strips reference-style images', () => {
+    expect(stripImages('![alt][ref]')).not.toContain('![');
+  });
+
+  it('strips ordinary inline images too', () => {
+    expect(stripImages('![logo](https://example.com/logo.png)')).not.toContain('![');
+  });
+
+  it('preserves ordinary inline links', () => {
+    expect(stripImages('see [bluedot](https://bluedot.org)')).toBe('see [bluedot](https://bluedot.org)');
+  });
+
+  it('preserves ordinary reference links and their definitions', () => {
+    const input = 'see [bluedot][1] for more\n\n[1]: https://bluedot.org';
+    expect(stripImages(input)).toBe(input);
+  });
+
+  it('handles multiple images and defs', () => {
+    const input = '![][image1]\n![][image2]\ntext\n\n[image1]: <data:image/png;base64,AAA>\n[image2]: <data:image/png;base64,BBB>';
+    const out = stripImages(input);
+    expect(out).not.toContain('data:');
+    expect(out).not.toContain('![');
+    expect(out).toContain('text');
+  });
 });

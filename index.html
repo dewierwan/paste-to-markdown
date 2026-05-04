@@ -320,6 +320,20 @@
   </main>
 
   <script>
+    // Strip image markdown so pasted Google Docs base64 blobs never reach the output.
+    function stripImages(markdown) {
+      return markdown
+        // Reference definitions pointing to data: URLs (the massive base64 blob).
+        .replace(/^[ \t]*\[[^\]\n]+\]:[ \t]*<?\s*data:[^\n]*>?[ \t]*$/gim, "")
+        // Inline images: ![alt](url)
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+        // Reference-style images: ![alt][ref]
+        .replace(/!\[[^\]]*\]\[[^\]]*\]/g, "")
+        // Tidy: trim trailing spaces per line, collapse 3+ blank lines to 2.
+        .replace(/[ \t]+$/gm, "")
+        .replace(/\n{3,}/g, "\n\n");
+    }
+
     // Convert the entire HTML content into Markdown.
     function convertToMarkdown(htmlContent) {
       const tempDiv = document.createElement("div");
@@ -551,7 +565,7 @@
       if (htmlContent.trim() === "") return;
 
       try {
-        const markdown = convertToMarkdown(htmlContent);
+        const markdown = stripImages(convertToMarkdown(htmlContent));
         outputElement.textContent = markdown;
 
         // Automatically copy to clipboard and show notification
