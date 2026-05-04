@@ -10,6 +10,7 @@ const fixturesDir = resolve(__dirname, 'fixtures');
 
 let convertToMarkdown;
 let stripImages;
+let stripWrappingFence;
 
 beforeAll(() => {
   const html = readFileSync(indexPath, 'utf-8');
@@ -17,11 +18,15 @@ beforeAll(() => {
   const dom = new JSDOM(html, { runScripts: 'dangerously', virtualConsole });
   convertToMarkdown = dom.window.convertToMarkdown;
   stripImages = dom.window.stripImages;
+  stripWrappingFence = dom.window.stripWrappingFence;
   if (typeof convertToMarkdown !== 'function') {
     throw new Error('convertToMarkdown not found on JSDOM window — index.html script may have failed to execute.');
   }
   if (typeof stripImages !== 'function') {
     throw new Error('stripImages not found on JSDOM window.');
+  }
+  if (typeof stripWrappingFence !== 'function') {
+    throw new Error('stripWrappingFence not found on JSDOM window.');
   }
 });
 
@@ -236,5 +241,32 @@ describe('stripImages', () => {
     expect(out).not.toContain('data:');
     expect(out).not.toContain('![');
     expect(out).toContain('text');
+  });
+});
+
+describe('stripWrappingFence', () => {
+  it('strips the outer fence around pasted markdown', () => {
+    const input = '```\n# Heading\n\nbody text\n```';
+    expect(stripWrappingFence(input)).toBe('# Heading\n\nbody text');
+  });
+
+  it('strips an outer fence with a language hint', () => {
+    const input = '```text\n# Heading\nbody\n```';
+    expect(stripWrappingFence(input)).toBe('# Heading\nbody');
+  });
+
+  it('preserves real code blocks embedded mid-document', () => {
+    const input = 'intro\n\n```js\nconst x = 1;\n```\n\noutro';
+    expect(stripWrappingFence(input)).toBe(input);
+  });
+
+  it('preserves multiple consecutive code blocks (does not merge)', () => {
+    const input = '```\nA\n```\n\n```\nB\n```';
+    expect(stripWrappingFence(input)).toBe(input);
+  });
+
+  it('passes through markdown with no fences', () => {
+    const input = '# Title\n\nparagraph';
+    expect(stripWrappingFence(input)).toBe(input);
   });
 });

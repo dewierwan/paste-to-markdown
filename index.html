@@ -320,6 +320,18 @@
   </main>
 
   <script>
+    // When plain markdown is pasted, the browser hands us a single <pre>, which the
+    // converter wraps in a code fence. Strip the outer fence so pasted markdown round-
+    // trips cleanly. Bail out if the inner content contains its own fences (real code
+    // blocks should pass through untouched).
+    function stripWrappingFence(markdown) {
+      const trimmed = markdown.trim();
+      const match = trimmed.match(/^```[^\n]*\n([\s\S]*)\n```$/);
+      if (!match) return markdown;
+      if (/^```/m.test(match[1])) return markdown;
+      return match[1];
+    }
+
     // Strip image markdown so pasted Google Docs base64 blobs never reach the output.
     function stripImages(markdown) {
       return markdown
@@ -565,7 +577,7 @@
       if (htmlContent.trim() === "") return;
 
       try {
-        const markdown = stripImages(convertToMarkdown(htmlContent));
+        const markdown = stripImages(stripWrappingFence(convertToMarkdown(htmlContent)));
         outputElement.textContent = markdown;
 
         // Automatically copy to clipboard and show notification
