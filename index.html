@@ -332,6 +332,13 @@
       return match[1];
     }
 
+    // Google Docs' "Copy as Markdown" over-escapes punctuation that has no markdown
+    // meaning (\~, \., \<, \>, \$, \&). Strip those backslashes so the output matches
+    // the source. Negative lookbehind avoids rewriting a literal escaped backslash.
+    function unescapeOverEscaped(markdown) {
+      return markdown.replace(/(?<!\\)\\([~.<>$&])/g, "$1");
+    }
+
     // Strip image markdown so pasted Google Docs base64 blobs never reach the output.
     function stripImages(markdown) {
       return markdown
@@ -577,7 +584,7 @@
       if (htmlContent.trim() === "") return;
 
       try {
-        const markdown = stripImages(stripWrappingFence(convertToMarkdown(htmlContent)));
+        const markdown = unescapeOverEscaped(stripImages(stripWrappingFence(convertToMarkdown(htmlContent))));
         outputElement.textContent = markdown;
 
         // Automatically copy to clipboard and show notification

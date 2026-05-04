@@ -11,6 +11,7 @@ const fixturesDir = resolve(__dirname, 'fixtures');
 let convertToMarkdown;
 let stripImages;
 let stripWrappingFence;
+let unescapeOverEscaped;
 
 beforeAll(() => {
   const html = readFileSync(indexPath, 'utf-8');
@@ -19,6 +20,7 @@ beforeAll(() => {
   convertToMarkdown = dom.window.convertToMarkdown;
   stripImages = dom.window.stripImages;
   stripWrappingFence = dom.window.stripWrappingFence;
+  unescapeOverEscaped = dom.window.unescapeOverEscaped;
   if (typeof convertToMarkdown !== 'function') {
     throw new Error('convertToMarkdown not found on JSDOM window — index.html script may have failed to execute.');
   }
@@ -27,6 +29,9 @@ beforeAll(() => {
   }
   if (typeof stripWrappingFence !== 'function') {
     throw new Error('stripWrappingFence not found on JSDOM window.');
+  }
+  if (typeof unescapeOverEscaped !== 'function') {
+    throw new Error('unescapeOverEscaped not found on JSDOM window.');
   }
 });
 
@@ -268,5 +273,31 @@ describe('stripWrappingFence', () => {
   it('passes through markdown with no fences', () => {
     const input = '# Title\n\nparagraph';
     expect(stripWrappingFence(input)).toBe(input);
+  });
+});
+
+describe('unescapeOverEscaped', () => {
+  it('unescapes \\~ to ~', () => {
+    expect(unescapeOverEscaped('\\~100 grants per year')).toBe('~100 grants per year');
+  });
+
+  it('unescapes \\. to .', () => {
+    expect(unescapeOverEscaped('end of year 1\\. The next')).toBe('end of year 1. The next');
+  });
+
+  it('unescapes \\$, \\&, \\<, \\>', () => {
+    expect(unescapeOverEscaped('\\$60k, M\\&E, \\<$10k, A \\> B'))
+      .toBe('$60k, M&E, <$10k, A > B');
+  });
+
+  it('preserves real markdown escapes', () => {
+    expect(unescapeOverEscaped('a \\* b')).toBe('a \\* b');
+    expect(unescapeOverEscaped('a \\[ b')).toBe('a \\[ b');
+    expect(unescapeOverEscaped('a \\_ b')).toBe('a \\_ b');
+  });
+
+  it('preserves a literal escaped backslash followed by a special char', () => {
+    expect(unescapeOverEscaped('a \\\\. b')).toBe('a \\\\. b');
+    expect(unescapeOverEscaped('a \\\\~ b')).toBe('a \\\\~ b');
   });
 });
