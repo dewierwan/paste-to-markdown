@@ -118,10 +118,9 @@
       max-width: 52ch;
     }
 
-    /* Two-column workspace */
+    /* Single full-width workspace */
     .container {
       display: flex;
-      gap: 24px;
       flex: 1;
       min-height: 0;
     }
@@ -166,7 +165,7 @@
       transition: opacity 0.3s ease;
     }
 
-    /* Card chrome shared by both panes */
+    /* Card chrome — the whole surface is the drop target */
     .card {
       background: var(--card);
       border: 1px solid var(--rule);
@@ -179,39 +178,12 @@
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .card:focus-within {
-      border-color: var(--accent);
-      box-shadow: var(--shadow-card), 0 0 0 3px var(--accent-ring);
-    }
-
-    /* Input pane — sans-serif, since pasted rich text is normally prose */
-    .ql-editor {
-      flex: 1;
-      width: 100%;
-      min-height: 0;
-      padding: 18px 20px;
-      font-family: var(--font-sans);
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      background: transparent;
-      caret-color: var(--accent);
-      overflow-y: auto;
-      outline: none;
-    }
-
-    .ql-editor:empty::before {
-      content: 'Paste here…';
-      color: var(--ink-subtle);
-      pointer-events: none;
-    }
-
     /* Output pane — iA Writer Mono, the writing surface */
     .output-content {
       flex: 1;
       width: 100%;
       min-height: 0;
-      padding: 18px 20px;
+      padding: 24px 28px;
       font-family: var(--font-mono);
       font-size: 13px;
       line-height: 1.7;
@@ -222,11 +194,20 @@
       overflow-y: auto;
     }
 
+    /* Empty state fills the surface so it reads as a big drop zone. */
+    .output-content:empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .output-content:empty::before {
-      content: 'Markdown will appear here.';
+      content: 'Paste anywhere · ⌘V';
       color: var(--ink-subtle);
       font-family: var(--font-sans);
-      font-size: 13px;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
     }
 
     /* Footer */
@@ -276,9 +257,8 @@
         font-size: 14px;
       }
 
-      .container {
-        flex-direction: column;
-        gap: 18px;
+      .output-content:empty::before {
+        font-size: 15px;
       }
     }
   </style>
@@ -288,19 +268,10 @@
     <header class="page-header">
       <div class="eyebrow">Paste to Markdown</div>
       <h1>Rich text in. Clean Markdown out.</h1>
-      <p class="subtitle">Paste anywhere on the left. Markdown is auto-copied to your clipboard.</p>
+      <p class="subtitle">Paste anywhere on the page. Markdown is auto-copied to your clipboard.</p>
     </header>
 
     <div class="container">
-      <section class="box input-box">
-        <div class="section-header">
-          <h3 class="section-label">Input</h3>
-        </div>
-        <div class="card">
-          <div class="ql-editor" contenteditable="true"></div>
-        </div>
-      </section>
-
       <section class="box output-box">
         <div class="section-header">
           <h3 class="section-label">Markdown output</h3>
@@ -573,45 +544,54 @@
       return result;
     }
 
-    // DOM Elements
-    const inputEditor = document.querySelector('.input-box .ql-editor');
+    // DOM element for the markdown output.
     const outputElement = document.getElementById('output');
 
-    // Update Markdown output, copy to clipboard, and clear input.
-    function updateMarkdown() {
-      const htmlContent = inputEditor.innerHTML;
-      // Only process if there's actual content
-      if (htmlContent.trim() === "") return;
-
-      try {
-        const markdown = unescapeOverEscaped(stripImages(stripWrappingFence(convertToMarkdown(htmlContent))));
-        outputElement.textContent = markdown;
-
-        // Automatically copy to clipboard and show notification
-        navigator.clipboard.writeText(markdown).then(() => {
-          const notification = document.getElementById('pastedNotification');
-          notification.style.opacity = '1';
-          setTimeout(() => {
-            notification.style.opacity = '0';
-          }, 3000);
-
-          // Clear the input after successful conversion and copying
-          setTimeout(() => {
-            inputEditor.innerHTML = "";
-          }, 500);
-        }).catch(err => {
-          console.error("Could not copy text: ", err);
-        });
-      } catch (e) {
-        console.error("Error converting content: ", e);
-        outputElement.textContent = "Error converting content.";
-      }
+    // Full pipeline: HTML string → cleaned Markdown string.
+    function convert(html) {
+      return unescapeOverEscaped(stripImages(stripWrappingFence(convertToMarkdown(html))));
     }
 
-    // Listen for paste event on the input.
-    inputEditor.addEventListener('paste', function(e) {
-      // Give the paste event time to complete before processing
-      setTimeout(updateMarkdown, 100);
+    // Escape a plain-text clipboard payload so the converter treats it as text.
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Convert, write to the output pane, auto-copy, and flash "Copied".
+    function render(html) {
+      const markdown = convert(html);
+      if (!markdown) return;
+      outputElement.textContent = markdown;
+
+      navigator.clipboard.writeText(markdown).then(() => {
+        const notification = document.getElementById('pastedNotification');
+        notification.style.opacity = '1';
+        setTimeout(() => {
+          notification.style.opacity = '0';
+        }, 3000);
+      }).catch(err => {
+        console.error("Could not copy text: ", err);
+      });
+    }
+
+    // Global paste capture: fires no matter what's focused (or when nothing is).
+    // Reads rich HTML when present, falls back to plain text. preventDefault
+    // stops the browser also pasting into any focused field on the page.
+    document.addEventListener('paste', (e) => {
+      const data = e.clipboardData;
+      if (!data) return;
+      const html = data.getData('text/html');
+      const text = data.getData('text/plain');
+      if (!html && !text) return;
+      e.preventDefault();
+      try {
+        render(html || escapeHtml(text));
+      } catch (err) {
+        console.error("Error converting content: ", err);
+        outputElement.textContent = "Error converting content.";
+      }
     });
   </script>
 </body>
