@@ -6,7 +6,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint:spell": "cspell \"**/*.{html,js,md,json}\"",
-    "lint:html": "html-validate index.html"
+    "lint:html": "html-validate index.html",
+    "stamp": "node scripts/stamp.mjs"
   },
   "devDependencies": {
     "cspell": "^8.0.0",
