@@ -335,6 +335,8 @@ body {
 }
 
 .output-content.is-rich a { color: #1155CC; }
+.output-content.is-rich :is(h1, h2, h3, h4, h5, h6) { margin: 0.8em 0 0.3em; line-height: 1.25; }
+.output-content.is-rich > :is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
 .output-content.is-rich ul,
 .output-content.is-rich ol { padding-left: 40px; }
 .output-content.is-rich table { border-collapse: collapse; }
@@ -373,7 +375,8 @@ body {
     justify-self: stretch;
     border-radius: 18px;
   }
-  .pills-from { grid-template-columns: repeat(3, 1fr); }
+  .pills-from,
+  .pills:not(.pills-from) { grid-template-columns: repeat(3, 1fr); }
   .pill { padding: 6px 8px; }
   .page-footer .dot { display: none; }
 }

@@ -2,8 +2,10 @@
 // paragraphs, <b>/<i>/<u>/<s>, links, lists, tables, quotes and code.
 // Fonts, sizes, colours, line height and margins are dropped.
 //
-// target "rich": the markup Gmail's compose box writes itself (<div> lines,
-//   headings as bold lines), ready to paste into email, Docs, Slack or Notion.
+// target "rich": the markup Gmail's compose box writes itself (<div> lines).
+//   headings "bold" (email: Gmail, Outlook and Slack have no headings) turns
+//   headings into bold lines; headings "keep" (Docs, Notion, Airtable) keeps
+//   <h1>–<h6> at their original level.
 // target "markdown": semantic tags (<p>, <h1>, <pre>) for the Markdown writer.
 //
 // Google Docs needs special handling: it writes paragraphs as <p> lines with
@@ -23,7 +25,11 @@
   const EMPTY_LINE = '<div><br></div>';
 
   function cleanHtml(html, options = {}) {
-    const opts = { target: options.target || 'rich', docs: options.docs ?? /docs-internal-guid/.test(html) };
+    const opts = {
+      target: options.target || 'rich',
+      headings: options.headings || 'bold',
+      docs: options.docs ?? /docs-internal-guid/.test(html),
+    };
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const start = { b: false, i: false, u: false, s: false, sup: false, sub: false, code: false, heading: false, href: null };
     const out = convertChildren(doc.body, start, 'block', opts);
@@ -83,6 +89,8 @@
       return heading ? `<${tag.toLowerCase()}>${inner}</${tag.toLowerCase()}>` : `<p>${inner}</p>`;
     }
     if (!inner.replace(/<br>|&nbsp;|\s/g, '')) return EMPTY_LINE; // includes Word's <p>&nbsp;</p>
+    // Real headings carry their own spacing, so no blank lines around them.
+    if (heading && opts.headings === 'keep') return `<${tag.toLowerCase()}>${inner}</${tag.toLowerCase()}>`;
     // Outside Docs, <p> and headings are spaced paragraphs; <div>s are lines.
     const spaced = !opts.docs && (tag === 'P' || heading);
     // In Docs, a paragraph is a line unless it has "space after" (or before) set.
@@ -159,7 +167,7 @@
     if (fmt.s) t = `<s>${t}</s>`;
     if (fmt.u && !fmt.href) t = `<u>${t}</u>`; // links are underlined already
     if (fmt.i) t = `<i>${t}</i>`;
-    if (fmt.b || (fmt.heading && rich)) t = `<b>${t}</b>`;
+    if (fmt.b || (fmt.heading && rich && opts.headings === 'bold')) t = `<b>${t}</b>`;
     if (fmt.href) t = `<a href="${escapeAttr(fmt.href)}">${t}</a>`;
     return t;
   }

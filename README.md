@@ -4,12 +4,13 @@ Paste rich text or Markdown. Pick where it's going. Get a clean version, copied 
 
 Live at **[pasteinto.com](https://pasteinto.com)**. (The old paste-to.md redirects here.)
 
-Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion's wrapping divs, Word's `Mso` styles, Claude's raw Markdown asterisks. This page reads any of them and writes one of four clean outputs:
+Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion's wrapping divs, Word's `Mso` styles, Claude's raw Markdown asterisks. This page reads any of them and writes one of five clean outputs:
 
 | Output | For |
 |---|---|
 | Markdown | Claude, ChatGPT, GitHub, Obsidian, Notion |
-| Rich text | Gmail, Outlook, Google Docs, Slack, Notion, Airtable: links, bold, italics and lists kept; fonts, sizes, colours and spacing dropped |
+| Email | Gmail, Outlook, Slack: looks as if you wrote it there (headings become bold lines, since these have no headings) |
+| Rich text | Google Docs, Notion, Airtable: like Email, but headings are kept at their original level |
 | WhatsApp | WhatsApp and Signal: `*bold*`, `_italic_`, `~strike~` |
 | Plain text | LinkedIn, text messages, forms |
 

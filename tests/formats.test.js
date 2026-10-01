@@ -22,9 +22,9 @@ describe('detect', () => {
   });
 });
 
-describe('Google Docs → rich text (email)', () => {
+describe('Google Docs → email', () => {
   it('keeps formatting, drops fonts and spacing, rebuilds nested lists', () => {
-    const { html } = w.convertClip({ html: docs(), text: '' }, 'rich', 'rich');
+    const { html } = w.convertClip({ html: docs(), text: '' }, 'rich', 'email');
     expect(html).toBe([
       '<div><b>Quick update</b></div>',
       '<div>Hi Sam, here is a <b>bold</b> point, an <i>italic</i> one, and <a href="https://bluedot.org/">a link</a>. &nbsp;Two spaces.</div>',
@@ -44,17 +44,17 @@ describe('Google Docs → rich text (email)', () => {
 
   it('a partial selection inside one paragraph stays inline', () => {
     const html = '<b style="font-weight:normal;" id="docs-internal-guid-x"><span style="font-weight:400;">just </span><span style="font-weight:700;">this</span></b>';
-    expect(w.convertClip({ html, text: '' }, 'rich', 'rich').html).toBe('just <b>this</b>');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).toBe('just <b>this</b>');
   });
 
   it('turns "space after paragraph" into a blank line', () => {
     const p = (t) => `<p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:12pt;"><span style="font-weight:400">${t}</span></p>`;
     const html = `<b style="font-weight:normal" id="docs-internal-guid-y">${p('One')}${p('Two')}</b>`;
-    expect(w.convertClip({ html, text: '' }, 'rich', 'rich').html).toBe('<div>One</div><div><br></div><div>Two</div>');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).toBe('<div>One</div><div><br></div><div>Two</div>');
   });
 
   it('drops unsafe links but keeps the text', () => {
-    expect(w.convertClip({ html: '<p><a href="javascript:alert(1)">x</a></p>', text: '' }, 'rich', 'rich').html).toBe('<div>x</div>');
+    expect(w.convertClip({ html: '<p><a href="javascript:alert(1)">x</a></p>', text: '' }, 'rich', 'email').html).toBe('<div>x</div>');
   });
 });
 
@@ -65,17 +65,17 @@ describe('Google Docs → Markdown', () => {
   });
 });
 
-describe('Notion and web HTML → rich text', () => {
+describe('Notion and web HTML → email', () => {
   it('puts blank lines between paragraphs, headings and lists', () => {
     const html = '<h2>Notes</h2><p>First <strong>bold</strong>.</p><p>Second.</p><ul><li>a</li></ul><p>After</p>';
-    expect(w.convertClip({ html, text: '', types: NOTION_TYPES }, 'rich', 'rich').html).toBe(
+    expect(w.convertClip({ html, text: '', types: NOTION_TYPES }, 'rich', 'email').html).toBe(
       '<div><b>Notes</b></div><div><br></div><div>First <b>bold</b>.</div><div><br></div><div>Second.</div><div><br></div>' +
       '<ul style="margin-top:0;margin-bottom:0"><li>a</li></ul><div><br></div><div>After</div>',
     );
   });
 
   it('collapses runs of empty paragraphs', () => {
-    expect(w.convertClip({ html: '<p>a</p><p>&nbsp;</p><p></p><p>b</p>', text: '' }, 'rich', 'rich').html)
+    expect(w.convertClip({ html: '<p>a</p><p>&nbsp;</p><p></p><p>b</p>', text: '' }, 'rich', 'email').html)
       .toBe('<div>a</div><div><br></div><div>b</div>');
   });
 });
@@ -83,8 +83,8 @@ describe('Notion and web HTML → rich text', () => {
 describe('Markdown → other outputs', () => {
   const md = '# Plan\n\nShip **the program** by *15 Nov*. See [doc](https://example.com).\n\n- One\n- Two with `code`\n  - Nested\n\nThanks,\nDewi';
 
-  it('rich text', () => {
-    expect(w.convertClip({ html: '', text: md }, 'markdown', 'rich').html).toBe(
+  it('email', () => {
+    expect(w.convertClip({ html: '', text: md }, 'markdown', 'email').html).toBe(
       '<div><b>Plan</b></div><div><br></div>' +
       '<div>Ship <b>the program</b> by <i>15 Nov</i>. See <a href="https://example.com">doc</a>.</div><div><br></div>' +
       '<ul style="margin-top:0;margin-bottom:0"><li>One</li><li>Two with <font face="monospace">code</font>' +
@@ -135,7 +135,7 @@ describe('Quill lists (Airtable rich text)', () => {
   const html = () => fixture('airtable/nested-bullets.html');
 
   it('rebuilds nesting from ql-indent classes in rich text', () => {
-    const out = w.convertClip({ html: html(), text: '' }, 'rich', 'rich').html;
+    const out = w.convertClip({ html: html(), text: '' }, 'rich', 'email').html;
     expect(out).toContain('<li>First topic<ul style="margin-top:0;margin-bottom:0"><li>detail one</li><li>detail <b>two</b></li></ul></li>');
     expect(out).toContain('<li>detail three<ul style="margin-top:0;margin-bottom:0"><li>deeper still</li></ul></li>');
   });
@@ -149,5 +149,26 @@ describe('Quill lists (Airtable rich text)', () => {
   it('reads Quill 2 data-list items as bullets or numbers', () => {
     const q2 = '<ol><li data-list="bullet">a</li><li data-list="bullet" class="ql-indent-1">b</li><li data-list="ordered">c</li></ol>';
     expect(w.convertClip({ html: q2, text: '' }, 'rich', 'plain').text).toBe('• a\n    • b\n1. c');
+  });
+});
+
+describe('Rich text output keeps headings (Docs, Notion, Airtable)', () => {
+  it('keeps an Airtable small heading as <h3>, with no blank lines around it', () => {
+    const out = w.convertClip({ html: fixture('airtable/nested-bullets.html'), text: '' }, 'rich', 'rich').html;
+    expect(out.startsWith('<h3>Agenda</h3><ul style="margin-top:0;margin-bottom:0"><li>First topic')).toBe(true);
+    expect(out).toContain('</ul><h3>People</h3>');
+  });
+
+  it('keeps Google Docs heading levels, without Docs styling', () => {
+    const out = w.convertClip({ html: docs(), text: '' }, 'rich', 'rich').html;
+    expect(out.startsWith('<h2>Quick update</h2><div>Hi Sam')).toBe(true);
+  });
+
+  it('keeps Markdown headings', () => {
+    expect(w.convertClip({ html: '', text: '## Plan\n\nText' }, 'markdown', 'rich').html).toBe('<h2>Plan</h2><div>Text</div>');
+  });
+
+  it('email still turns headings into bold lines', () => {
+    expect(w.convertClip({ html: '', text: '## Plan\n\nText' }, 'markdown', 'email').html).toBe('<div><b>Plan</b></div><div><br></div><div>Text</div>');
   });
 });

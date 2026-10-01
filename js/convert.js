@@ -51,7 +51,8 @@
     return listLines.length >= 2;
   }
 
-  // readAs: 'rich' | 'markdown' | 'text'. output: 'markdown' | 'rich' | 'whatsapp' | 'plain'.
+  // readAs: 'rich' | 'markdown' | 'text'.
+  // output: 'markdown' | 'email' | 'rich' | 'whatsapp' | 'plain'.
   // Returns { text, html } where html is set only for rich output.
   function convertClip(clip, readAs, output) {
     const docs = readAs === 'rich' && /docs-internal-guid/.test(clip.html || '');
@@ -67,9 +68,12 @@
       return { text: unescapeOverEscaped(stripImages(stripWrappingFence(convertToMarkdown(source)))) };
     }
 
-    const rich = cleanHtml(html, { target: 'rich', docs });
-    if (output === 'rich') return { html: rich, text: toText(rich, 'plain') };
-    return { text: toText(rich, output) };
+    // Email markup (headings as bold lines) also feeds the text writers.
+    const email = cleanHtml(html, { target: 'rich', headings: 'bold', docs });
+    const plain = toText(email, 'plain');
+    if (output === 'email') return { html: email, text: plain };
+    if (output === 'rich') return { html: cleanHtml(html, { target: 'rich', headings: 'keep', docs }), text: plain };
+    return { text: output === 'plain' ? plain : toText(email, output) };
   }
 
   function textToHtml(text) {
