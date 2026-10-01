@@ -14,28 +14,30 @@
   <main class="page">
     <header class="page-header">
       <div class="eyebrow">Paste Into</div>
-      <h1>Paste anything. Get clean <span id="outputNoun">Markdown</span>.</h1>
-      <p class="subtitle">Paste anywhere on the page. Links, bold, italics and lists are kept; fonts, sizes and spacing are dropped. The result is auto-copied to your clipboard.</p>
+      <h1>Paste anything. Get clean <span id="outputNoun">markdown</span>.</h1>
     </header>
 
     <div class="controls">
-      <span class="control-label" id="fromLabel">From</span>
-      <div id="readPills" class="pills pills-from" role="group" aria-labelledby="fromLabel" aria-disabled="true">
-        <button type="button" class="pill" data-read="markdown" disabled>Markdown</button>
-        <button type="button" class="pill" data-read="rich" disabled>Rich text</button>
-        <button type="button" class="pill" data-read="text" disabled>Plain text</button>
+      <div class="control-row">
+        <span class="control-label" id="fromLabel">From</span>
+        <div id="readPills" class="pills pills-from" role="group" aria-labelledby="fromLabel" aria-disabled="true">
+          <button type="button" class="pill" data-read="markdown" disabled>Markdown</button>
+          <button type="button" class="pill" data-read="rich" disabled>Rich text</button>
+          <button type="button" class="pill" data-read="text" disabled>Plain text</button>
+        </div>
+        <span id="sourceHint" class="hint">Detected when you paste</span>
       </div>
-      <span id="sourceHint" class="hint">Detected when you paste</span>
-
-      <span class="control-label" id="toLabel">To</span>
-      <div class="pills" role="group" aria-labelledby="toLabel">
-        <button type="button" class="pill" data-output="markdown">Markdown</button>
-        <button type="button" class="pill" data-output="email">Email</button>
-        <button type="button" class="pill" data-output="rich">Rich text</button>
-        <button type="button" class="pill" data-output="whatsapp">WhatsApp</button>
-        <button type="button" class="pill" data-output="plain">Plain text</button>
+      <div class="control-row">
+        <span class="control-label" id="toLabel">To</span>
+        <div class="pills" role="group" aria-labelledby="toLabel">
+          <button type="button" class="pill" data-output="markdown">Markdown</button>
+          <button type="button" class="pill" data-output="email">Email</button>
+          <button type="button" class="pill" data-output="rich">Rich text</button>
+          <button type="button" class="pill" data-output="whatsapp">WhatsApp</button>
+          <button type="button" class="pill" data-output="plain">Plain text</button>
+        </div>
+        <span id="outputHint" class="hint"></span>
       </div>
-      <span id="outputHint" class="hint"></span>
     </div>
 
     <div class="container">

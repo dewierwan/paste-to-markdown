@@ -2,7 +2,7 @@
 // Switching the output re-converts the last paste and copies again.
 (function () {
   const OUTPUTS = {
-    markdown: { noun: 'Markdown', hint: 'For Claude, ChatGPT, GitHub, Obsidian and Notion' },
+    markdown: { noun: 'markdown', hint: 'For Claude, ChatGPT, GitHub, Obsidian and Notion' },
     email: { noun: 'email text', hint: 'For Gmail, Outlook and Slack: looks as if you wrote it there' },
     rich: { noun: 'rich text', hint: 'For Google Docs, Notion and Airtable: headings kept' },
     whatsapp: { noun: 'WhatsApp text', hint: 'For WhatsApp and Signal: *bold*, _italic_, ~strike~' },

@@ -100,12 +100,6 @@ body {
   margin-bottom: 10px;
 }
 
-.subtitle {
-  font-size: 15px;
-  color: var(--ink-muted);
-  line-height: 1.55;
-  max-width: 52ch;
-}
 
 /* Single full-width workspace */
 .container {
@@ -242,23 +236,27 @@ body {
     font-size: 24px;
   }
 
-  .subtitle {
-    font-size: 14px;
-  }
 
   .output-content:empty::before {
     font-size: 15px;
   }
 }
 
-/* From / To selectors: one grid so the labels, pills and hints line up. */
+/* From / To selectors: one row each, hint right after the pills. */
 .controls {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  align-items: center;
-  gap: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 20px;
   flex-shrink: 0;
+}
+
+/* Each row is its own grid, so a long hint wraps beside its pills. */
+.control-row {
+  display: grid;
+  grid-template-columns: 36px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 14px;
 }
 
 .control-label {
@@ -272,7 +270,6 @@ body {
 
 .pills {
   display: inline-flex;
-  justify-self: start;
   flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
@@ -349,12 +346,7 @@ body {
 }
 
 @media (max-width: 720px) {
-  .controls {
-    grid-template-columns: auto 1fr;
-    gap: 8px 12px;
-    margin-bottom: 16px;
-  }
-  .controls .hint { grid-column: 2; margin-bottom: 4px; }
+  .controls { margin-bottom: 16px; }
   .pill { padding: 6px 11px; }
 }
 
@@ -367,12 +359,10 @@ body {
 
 @media (max-width: 480px) {
   /* Labels sit above full-width pill groups: From in three columns, To in a 2×2 grid. */
-  .controls { grid-template-columns: 1fr; gap: 6px; }
-  .controls .hint { grid-column: 1; margin-bottom: 10px; }
+  .controls { gap: 14px; }
+  .control-row { grid-template-columns: 1fr; gap: 6px; }
   .pills {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    justify-self: stretch;
     border-radius: 18px;
   }
   .pills-from,
