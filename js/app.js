@@ -8,18 +8,21 @@
     plain: { noun: 'plain text', hint: 'For LinkedIn, text messages and forms' },
   };
   const STORAGE_KEY = 'paste-to.output';
+  const APP_SOURCES = ['gdocs', 'notion', 'word', 'gmail', 'airtable'];
 
   const output = document.getElementById('output');
   const flash = document.getElementById('copyFlash');
   const hint = document.getElementById('outputHint');
   const noun = document.getElementById('outputNoun');
-  const sourceSelect = document.getElementById('sourceSelect');
-  const autoOption = sourceSelect.querySelector('option[value="auto"]');
-  const pills = Array.from(document.querySelectorAll('.pill'));
+  const sourceHint = document.getElementById('sourceHint');
+  const readGroup = document.getElementById('readPills');
+  const readPills = Array.from(readGroup.querySelectorAll('.pill'));
+  const pills = Array.from(document.querySelectorAll('[data-output]'));
 
   let current = load() || 'markdown';
   let clip = null; // { html, text, types }
   let detected = null; // { source, read }
+  let readAs = null; // detected.read unless the user picks another "From" option
   let flashTimer;
 
   selectOutput(current, false);
@@ -28,7 +31,13 @@
     pill.addEventListener('click', () => selectOutput(pill.dataset.output, true));
   });
 
-  sourceSelect.addEventListener('change', () => render(true));
+  readPills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      readAs = pill.dataset.read;
+      showReadAs();
+      render(true);
+    });
+  });
 
   // Global paste capture: fires whatever is focused. preventDefault stops the
   // browser also pasting into a focused control.
@@ -41,11 +50,19 @@
     event.preventDefault();
     clip = { html, text, types: Array.from(data.types || []) };
     detected = detect(clip);
-    autoOption.textContent = `From ${SOURCE_NAMES[detected.source]}`;
-    sourceSelect.value = 'auto';
-    sourceSelect.hidden = false;
+    readAs = detected.read;
+    readGroup.removeAttribute('aria-disabled');
+    readPills.forEach((p) => { p.disabled = false; });
+    // Name the app when we recognise one; otherwise the selected pill says it all.
+    const app = APP_SOURCES.includes(detected.source) ? SOURCE_NAMES[detected.source] : null;
+    sourceHint.textContent = app ? `Detected ${app}` : 'Detected automatically';
+    showReadAs();
     render(true);
   });
+
+  function showReadAs() {
+    readPills.forEach((p) => p.setAttribute('aria-pressed', String(p.dataset.read === readAs)));
+  }
 
   function selectOutput(name, copy) {
     current = name;
@@ -58,7 +75,6 @@
 
   function render(copy) {
     if (!clip) return;
-    const readAs = sourceSelect.value === 'auto' ? detected.read : sourceSelect.value;
     let result;
     try {
       result = convertClip(clip, readAs, current);

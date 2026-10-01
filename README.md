@@ -28,8 +28,8 @@ Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion'
 ## Run locally
 
 ```sh
-git clone https://github.com/dewierwan/paste-to-markdown
-open paste-to-markdown/index.html
+git clone https://github.com/dewierwan/pasteinto
+open pasteinto/index.html
 ```
 
 ## How it works

@@ -251,18 +251,28 @@ body {
   }
 }
 
-/* Output selector: segmented pills */
+/* From / To selectors: one grid so the labels, pills and hints line up. */
 .controls {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
   align-items: center;
-  gap: 8px 16px;
+  gap: 10px 14px;
   margin-bottom: 20px;
   flex-shrink: 0;
 }
 
+.control-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent-label);
+  text-transform: uppercase;
+  min-width: 36px;
+}
+
 .pills {
   display: inline-flex;
+  justify-self: start;
   flex-wrap: wrap;
   gap: 4px;
   padding: 4px;
@@ -291,8 +301,7 @@ body {
   color: #fff;
 }
 
-.pill:focus-visible,
-.source-select:focus-visible {
+.pill:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
@@ -302,26 +311,19 @@ body {
   color: var(--ink-subtle);
 }
 
-/* "From" chip: shows the detected source; change it to re-read the paste. */
-.section-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* "From" is automatic and secondary: a soft tint instead of solid blue,
+   dimmed until there is a paste to re-read. */
+.pills-from .pill[aria-pressed="true"] {
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
-.source-select {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  background: var(--card);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-pill);
-  padding: 2px 8px;
-  cursor: pointer;
+.pill:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
 
-.source-select[hidden] { display: none; }
+.pill:disabled:hover { color: var(--ink-muted); }
 
 /* Rich text preview renders like a Gmail compose body. */
 .output-content.is-rich {
@@ -345,7 +347,12 @@ body {
 }
 
 @media (max-width: 720px) {
-  .controls { margin-bottom: 16px; }
+  .controls {
+    grid-template-columns: auto 1fr;
+    gap: 8px 12px;
+    margin-bottom: 16px;
+  }
+  .controls .hint { grid-column: 2; margin-bottom: 4px; }
   .pill { padding: 6px 11px; }
 }
 
@@ -357,11 +364,24 @@ body {
 .copy-flash { white-space: nowrap; }
 
 @media (max-width: 480px) {
+  /* Labels sit above full-width pill groups: From in three columns, To in a 2×2 grid. */
+  .controls { grid-template-columns: 1fr; gap: 6px; }
+  .controls .hint { grid-column: 1; margin-bottom: 10px; }
   .pills {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    width: 100%;
+    justify-self: stretch;
     border-radius: 18px;
   }
+  .pills-from { grid-template-columns: repeat(3, 1fr); }
+  .pill { padding: 6px 8px; }
   .page-footer .dot { display: none; }
+}
+
+/* On short or narrow screens the header and controls leave too little room for
+   a fixed-height card, so let the page scroll and give the card a usable height. */
+@media (max-width: 480px), (max-height: 600px) {
+  html, body { overflow: auto; }
+  .page { height: auto; min-height: 100vh; }
+  .card { min-height: 60vh; flex: none; }
 }

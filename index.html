@@ -19,7 +19,16 @@
     </header>
 
     <div class="controls">
-      <div class="pills" role="group" aria-label="Output format">
+      <span class="control-label" id="fromLabel">From</span>
+      <div id="readPills" class="pills pills-from" role="group" aria-labelledby="fromLabel" aria-disabled="true">
+        <button type="button" class="pill" data-read="markdown" disabled>Markdown</button>
+        <button type="button" class="pill" data-read="rich" disabled>Rich text</button>
+        <button type="button" class="pill" data-read="text" disabled>Plain text</button>
+      </div>
+      <span id="sourceHint" class="hint">Detected when you paste</span>
+
+      <span class="control-label" id="toLabel">To</span>
+      <div class="pills" role="group" aria-labelledby="toLabel">
         <button type="button" class="pill" data-output="markdown">Markdown</button>
         <button type="button" class="pill" data-output="rich">Rich text</button>
         <button type="button" class="pill" data-output="whatsapp">WhatsApp</button>
@@ -32,15 +41,7 @@
       <section class="box output-box">
         <div class="section-header">
           <h3 class="section-label">Output</h3>
-          <div class="section-meta">
-            <span id="copyFlash" class="copy-flash" role="status"></span>
-            <select id="sourceSelect" class="source-select" aria-label="Read the paste as" hidden>
-              <option value="auto">From …</option>
-              <option value="rich">Read as rich text</option>
-              <option value="markdown">Read as Markdown</option>
-              <option value="text">Read as plain text</option>
-            </select>
-          </div>
+          <span id="copyFlash" class="copy-flash" role="status"></span>
         </div>
         <div class="card">
           <div id="output" class="output-content"></div>
@@ -51,7 +52,7 @@
     <footer class="page-footer">
       <span>Runs in your browser. Nothing you paste is uploaded.</span>
       <span class="dot">·</span>
-      <a href="https://github.com/dewierwan/paste-to-markdown">GitHub</a>
+      <a href="https://github.com/dewierwan/pasteinto">GitHub</a>
     </footer>
   </main>
 

@@ -1,5 +1,5 @@
 {
-  "name": "paste-to-markdown",
+  "name": "pasteinto",
   "private": true,
   "description": "Tests + lint scaffolding. The site itself stays a single self-contained index.html.",
   "scripts": {
