@@ -1,8 +1,8 @@
-# Paste to Markdown, rich text, WhatsApp or plain text
+# Paste Into
 
 Paste rich text or Markdown. Pick where it's going. Get a clean version, copied automatically.
 
-Live at **[paste-to.md](https://paste-to.md)**.
+Live at **[pasteinto.com](https://pasteinto.com)**. (The old paste-to.md redirects here.)
 
 Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion's wrapping divs, Word's `Mso` styles, Claude's raw Markdown asterisks. This page reads any of them and writes one of four clean outputs:
 
