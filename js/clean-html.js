@@ -217,7 +217,11 @@
         collectListItems(child, depth + 1, fmt, opts, items);
       } else if (child.tagName === 'LI') {
         const ariaLevel = parseInt(child.getAttribute('aria-level'), 10);
-        const tag = listEl.tagName.toLowerCase();
+        // Quill (Airtable, many web editors) keeps lists flat and marks nesting
+        // with class="ql-indent-N"; Quill 2 also says bullet vs number per item.
+        const quillIndent = parseInt((child.className.match(/\bql-indent-(\d+)/) || [])[1], 10) || 0;
+        const quillList = child.getAttribute('data-list');
+        const tag = quillList === 'bullet' ? 'ul' : quillList === 'ordered' ? 'ol' : listEl.tagName.toLowerCase();
         const type = tag === 'ol' && OL_TYPES[child.style.listStyleType];
         const itemFmt = nextFormat(child, fmt);
         let html = '';
@@ -228,7 +232,7 @@
         }
         const style = opts.target === 'rich' ? LIST_STYLE : '';
         items.push({
-          level: ariaLevel > 0 ? ariaLevel - 1 : depth,
+          level: ariaLevel > 0 ? ariaLevel - 1 : depth + quillIndent,
           tag,
           open: `<${tag}${type ? ` type="${type}"` : ''}${style}>`,
           html: html || '<br>',

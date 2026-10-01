@@ -130,3 +130,24 @@ describe('Markdown writer fixes', () => {
     expect(w.convertToMarkdown('<p><b>Bold </b>x<s> gone</s></p>')).toBe('**Bold** x ~~gone~~');
   });
 });
+
+describe('Quill lists (Airtable rich text)', () => {
+  const html = () => fixture('airtable/nested-bullets.html');
+
+  it('rebuilds nesting from ql-indent classes in rich text', () => {
+    const out = w.convertClip({ html: html(), text: '' }, 'rich', 'rich').html;
+    expect(out).toContain('<li>First topic<ul style="margin-top:0;margin-bottom:0"><li>detail one</li><li>detail <b>two</b></li></ul></li>');
+    expect(out).toContain('<li>detail three<ul style="margin-top:0;margin-bottom:0"><li>deeper still</li></ul></li>');
+  });
+
+  it('indents sub-bullets in plain text', () => {
+    expect(w.convertClip({ html: html(), text: '' }, 'rich', 'plain').text).toContain(
+      '• First topic\n    • detail one\n    • detail two\n• Second topic\n    • detail three\n        • deeper still',
+    );
+  });
+
+  it('reads Quill 2 data-list items as bullets or numbers', () => {
+    const q2 = '<ol><li data-list="bullet">a</li><li data-list="bullet" class="ql-indent-1">b</li><li data-list="ordered">c</li></ol>';
+    expect(w.convertClip({ html: q2, text: '' }, 'rich', 'plain').text).toBe('• a\n    • b\n1. c');
+  });
+});

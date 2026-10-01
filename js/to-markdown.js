@@ -115,7 +115,7 @@ function convertNodeToMarkdown(node, indentLevel = 0, listIndex = null) {
             ulMarkdown += convertNodeToMarkdown(child, indentLevel);
           }
         });
-        return ulMarkdown;
+        return ulMarkdown + "\n"; // blank line after the list, as for <ol>
       }
       case 'ol': {
         let olMarkdown = "\n";
