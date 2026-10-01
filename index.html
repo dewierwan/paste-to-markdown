@@ -3,596 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paste to Markdown</title>
-  <meta name="description" content="Paste rich text from Notion, Google Docs, Airtable. Get clean Markdown, auto-copied to your clipboard.">
+  <title>Paste to Markdown, rich text, WhatsApp or plain text</title>
+  <meta name="description" content="Paste from Google Docs, Notion, Word, Claude or anywhere. Get clean Markdown, email-ready rich text, WhatsApp text or plain text, auto-copied to your clipboard.">
   <link rel="icon" type="image/png" href="paperclip.png">
   <link rel="preload" href="fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/iAWriterMonoS-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <style>
-    /* Fonts (OFL) — see fonts/LICENSE.md */
-    @font-face {
-      font-family: 'Inter';
-      src: url('fonts/InterVariable.woff2') format('woff2-variations');
-      font-weight: 100 900;
-      font-style: normal;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: 'iA Writer Mono';
-      src: url('fonts/iAWriterMonoS-Regular.woff2') format('woff2');
-      font-weight: 400;
-      font-style: normal;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: 'iA Writer Mono';
-      src: url('fonts/iAWriterMonoS-Bold.woff2') format('woff2');
-      font-weight: 700;
-      font-style: normal;
-      font-display: swap;
-    }
-
-    :root {
-      --paper:        #F7F7F7;
-      --card:         #FFFFFF;
-      --rule:         #EAEAEA;
-      --rule-soft:    #F0F0F0;
-      --ink:          #222222;
-      --ink-muted:    #555555;
-      --ink-subtle:   #888888;
-      --accent:       #0080FF;
-      --accent-label: #00A3FF;
-      --accent-bg:    #E8F2FF;
-      --accent-ring:  rgba(0, 128, 255, 0.18);
-
-      --shadow-card:
-        0 1px 2px rgba(0, 0, 0, 0.04),
-        0 4px 12px rgba(0, 0, 0, 0.04),
-        0 12px 32px rgba(0, 0, 0, 0.04);
-
-      --r-sm: 6px;
-      --r-md: 8px;
-      --r-pill: 999px;
-
-      --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      --font-mono: 'iA Writer Mono', ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-
-    body {
-      font-family: var(--font-sans);
-      font-size: 14px;
-      font-weight: 450;
-      line-height: 1.55;
-      color: var(--ink);
-      background: var(--paper);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-    }
-
-    .page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 32px 24px 24px;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    /* Header */
-    .page-header {
-      margin-bottom: 24px;
-      flex-shrink: 0;
-    }
-
-    .eyebrow {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--accent-label);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .page-header h1 {
-      font-family: var(--font-sans);
-      font-size: 32px;
-      font-weight: 600;
-      letter-spacing: -0.4px;
-      line-height: 1.2;
-      color: var(--ink);
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      font-size: 15px;
-      color: var(--ink-muted);
-      line-height: 1.55;
-      max-width: 52ch;
-    }
-
-    /* Single full-width workspace */
-    .container {
-      display: flex;
-      flex: 1;
-      min-height: 0;
-    }
-
-    .box {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 0;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      min-height: 22px;
-      margin-bottom: 12px;
-    }
-
-    .section-label {
-      font-family: var(--font-sans);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--accent-label);
-      text-transform: uppercase;
-    }
-
-    .copy-flash {
-      display: inline-block;
-      font-family: var(--font-sans);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-      padding: 2px 10px;
-      background: var(--accent-bg);
-      color: var(--accent);
-      border-radius: var(--r-pill);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    /* Card chrome — the whole surface is the drop target */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--rule);
-      border-radius: var(--r-md);
-      box-shadow: var(--shadow-card);
-      flex: 1;
-      display: flex;
-      min-height: 0;
-      overflow: hidden;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    /* Output pane — iA Writer Mono, the writing surface */
-    .output-content {
-      flex: 1;
-      width: 100%;
-      min-height: 0;
-      padding: 24px 28px;
-      font-family: var(--font-mono);
-      font-size: 13px;
-      line-height: 1.7;
-      color: var(--ink);
-      background: transparent;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      overflow-y: auto;
-    }
-
-    /* Empty state fills the surface so it reads as a big drop zone. */
-    .output-content:empty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .output-content:empty::before {
-      content: 'Paste anywhere · ⌘V';
-      color: var(--ink-subtle);
-      font-family: var(--font-sans);
-      font-size: 18px;
-      font-weight: 500;
-      letter-spacing: 0.2px;
-    }
-
-    /* Footer */
-    .page-footer {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--rule);
-      font-size: 12px;
-      color: var(--ink-subtle);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .page-footer a {
-      color: var(--ink-muted);
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-
-    .page-footer a:hover {
-      color: var(--accent);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    .page-footer .dot {
-      color: var(--ink-subtle);
-    }
-
-    /* Responsive — single column on narrow viewports */
-    @media (max-width: 720px) {
-      .page {
-        padding: 24px 18px 18px;
-      }
-
-      .page-header {
-        margin-bottom: 18px;
-      }
-
-      .page-header h1 {
-        font-size: 24px;
-      }
-
-      .subtitle {
-        font-size: 14px;
-      }
-
-      .output-content:empty::before {
-        font-size: 15px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
-      <div class="eyebrow">Paste to Markdown</div>
-      <h1>Rich text in. Clean Markdown out.</h1>
-      <p class="subtitle">Paste anywhere on the page. Markdown is auto-copied to your clipboard.</p>
+      <div class="eyebrow">paste-to.md</div>
+      <h1>Paste anything. Get clean <span id="outputNoun">Markdown</span>.</h1>
+      <p class="subtitle">Paste anywhere on the page. Links, bold, italics and lists are kept; fonts, sizes and spacing are dropped. The result is auto-copied to your clipboard.</p>
     </header>
+
+    <div class="controls">
+      <div class="pills" role="group" aria-label="Output format">
+        <button type="button" class="pill" data-output="markdown">Markdown</button>
+        <button type="button" class="pill" data-output="rich">Rich text</button>
+        <button type="button" class="pill" data-output="whatsapp">WhatsApp</button>
+        <button type="button" class="pill" data-output="plain">Plain text</button>
+      </div>
+      <span id="outputHint" class="hint"></span>
+    </div>
 
     <div class="container">
       <section class="box output-box">
         <div class="section-header">
-          <h3 class="section-label">Markdown output</h3>
-          <span id="pastedNotification" class="copy-flash">Copied</span>
+          <h3 class="section-label">Output</h3>
+          <div class="section-meta">
+            <span id="copyFlash" class="copy-flash" role="status"></span>
+            <select id="sourceSelect" class="source-select" aria-label="Read the paste as" hidden>
+              <option value="auto">From …</option>
+              <option value="rich">Read as rich text</option>
+              <option value="markdown">Read as Markdown</option>
+              <option value="text">Read as plain text</option>
+            </select>
+          </div>
         </div>
         <div class="card">
-          <pre id="output" class="output-content"></pre>
+          <div id="output" class="output-content"></div>
         </div>
       </section>
     </div>
 
     <footer class="page-footer">
-      <a href="https://github.com/dewierwan/paste-to-markdown">GitHub</a>
+      <span>Runs in your browser. Nothing you paste is uploaded.</span>
       <span class="dot">·</span>
-      <a href="https://support.google.com/docs/answer/12014036">Google Docs paste tips</a>
+      <a href="https://github.com/dewierwan/paste-to-markdown">GitHub</a>
     </footer>
   </main>
 
-  <script>
-    // When plain markdown is pasted, the browser hands us a single <pre>, which the
-    // converter wraps in a code fence. Strip the outer fence so pasted markdown round-
-    // trips cleanly. Bail out if the inner content contains its own fences (real code
-    // blocks should pass through untouched).
-    function stripWrappingFence(markdown) {
-      const trimmed = markdown.trim();
-      const match = trimmed.match(/^```[^\n]*\n([\s\S]*)\n```$/);
-      if (!match) return markdown;
-      if (/^```/m.test(match[1])) return markdown;
-      return match[1];
-    }
-
-    // Google Docs' "Copy as Markdown" over-escapes punctuation that has no markdown
-    // meaning (\~, \., \<, \>, \$, \&). Strip those backslashes so the output matches
-    // the source. Negative lookbehind avoids rewriting a literal escaped backslash.
-    function unescapeOverEscaped(markdown) {
-      return markdown.replace(/(?<!\\)\\([~.<>$&])/g, "$1");
-    }
-
-    // Strip image markdown so pasted Google Docs base64 blobs never reach the output.
-    function stripImages(markdown) {
-      return markdown
-        // Reference definitions pointing to data: URLs (the massive base64 blob).
-        .replace(/^[ \t]*\[[^\]\n]+\]:[ \t]*<?\s*data:[^\n]*>?[ \t]*$/gim, "")
-        // Inline images: ![alt](url)
-        .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-        // Reference-style images: ![alt][ref]
-        .replace(/!\[[^\]]*\]\[[^\]]*\]/g, "")
-        // Tidy: trim trailing spaces per line, collapse 3+ blank lines to 2.
-        .replace(/[ \t]+$/gm, "")
-        .replace(/\n{3,}/g, "\n\n");
-    }
-
-    // Convert the entire HTML content into Markdown.
-    function convertToMarkdown(htmlContent) {
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = htmlContent;
-      return convertNodeToMarkdown(tempDiv).replace(/\n{3,}/g, '\n\n').trim();
-    }
-
-    // Escape characters that would otherwise be parsed as Markdown formatting.
-    // Conservative set: chars that are inline-meaningful in any position.
-    function escapeMarkdown(text) {
-      return text.replace(/([\\`*_\[\]~])/g, '\\$1');
-    }
-
-    // Recursively convert a node to Markdown.
-    function convertNodeToMarkdown(node, indentLevel = 0, listIndex = null) {
-      let markdown = "";
-      if (node.nodeType === Node.TEXT_NODE) {
-        return escapeMarkdown(node.textContent);
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const tag = node.tagName.toLowerCase();
-        switch (tag) {
-          case 'h1':
-            return "# " + getInnerMarkdown(node, indentLevel) + "\n\n";
-          case 'h2':
-            return "## " + getInnerMarkdown(node, indentLevel) + "\n\n";
-          case 'h3':
-            return "### " + getInnerMarkdown(node, indentLevel) + "\n\n";
-          case 'h4':
-            return "#### " + getInnerMarkdown(node, indentLevel) + "\n\n";
-          case 'h5':
-            return "##### " + getInnerMarkdown(node, indentLevel) + "\n\n";
-          case 'h6':
-            return "###### " + getInnerMarkdown(node, indentLevel) + "\n\n";
-          case 'strong':
-          case 'b':
-            return "**" + getInnerMarkdown(node, indentLevel) + "**";
-          case 'em':
-          case 'i': {
-            let text = getInnerMarkdown(node, indentLevel);
-            let trailingSpaces = '';
-            let mainText = text;
-            let match = text.match(/(\s+)$/);
-            if (match) {
-              trailingSpaces = match[1];
-              mainText = text.slice(0, -trailingSpaces.length);
-            }
-            return "*" + mainText + "*" + trailingSpaces;
-          }
-          case 's':
-          case 'strike':
-          case 'del':
-            return "~~" + getInnerMarkdown(node, indentLevel) + "~~";
-          case 'mark':
-            return "<mark>" + getInnerMarkdown(node, indentLevel) + "</mark>";
-          case 'sub':
-            return "<sub>" + getInnerMarkdown(node, indentLevel) + "</sub>";
-          case 'sup':
-            return "<sup>" + getInnerMarkdown(node, indentLevel) + "</sup>";
-          case 'code':
-            return "`" + node.textContent + "`";
-          case 'pre': {
-            // Language hint: data-language (Notion) or class="language-xyz" (Prism)
-            let lang = node.getAttribute('data-language') || '';
-            if (!lang) {
-              const codeChild = node.querySelector('code');
-              const target = codeChild || node;
-              const langClass = Array.from(target.classList).find(c => c.startsWith('language-'));
-              if (langClass) lang = langClass.slice(9);
-            }
-            return "```" + lang + "\n" + node.textContent + "\n```\n\n";
-          }
-          case 'blockquote': {
-            const blockquoteContent = getInnerMarkdown(node, indentLevel);
-            return blockquoteContent.split('\n')
-              .map(line => line.trim() ? "> " + line : line)
-              .join('\n') + "\n\n";
-          }
-          case 'ul': {
-            let ulMarkdown = "";
-            Array.from(node.children).forEach(child => {
-              if (child.tagName.toLowerCase() === 'li') {
-                ulMarkdown += convertNodeToMarkdown(child, indentLevel);
-              }
-            });
-            return ulMarkdown;
-          }
-          case 'ol': {
-            let olMarkdown = "\n";
-            let counter = 1;
-            Array.from(node.children).forEach(child => {
-              if (child.tagName.toLowerCase() === 'li') {
-                olMarkdown += convertNodeToMarkdown(child, indentLevel, counter);
-                counter++;
-              }
-            });
-            return olMarkdown + "\n";
-          }
-          case 'li': {
-            let indent = indentLevel;
-            node.classList.forEach(cls => {
-              if (cls.indexOf("ql-indent-") === 0) {
-                const level = parseInt(cls.substring(10));
-                if (!isNaN(level)) {
-                  indent = level;
-                }
-              }
-            });
-            let prefix = "";
-            if (node.parentElement && node.parentElement.tagName.toLowerCase() === 'ul' && node.parentElement.hasAttribute("data-checked")) {
-              let isChecked = node.parentElement.getAttribute("data-checked") === "true";
-              prefix = "  ".repeat(indent) + (isChecked ? "- [x] " : "- [ ] ");
-            } else {
-              // Check for checkbox inside the list item.
-              let checkbox = node.querySelector('input[type="checkbox"]');
-              if (checkbox) {
-                prefix = "  ".repeat(indent) + (checkbox.checked ? "- [x] " : "- [ ] ");
-                checkbox.remove();
-              } else if (node.parentElement && node.parentElement.tagName.toLowerCase() === 'ol') {
-                prefix = "  ".repeat(indent) + (listIndex !== null ? listIndex + ". " : "1. ");
-              } else {
-                prefix = "  ".repeat(indent) + "- ";
-              }
-            }
-            let liContent = getInnerMarkdown(node, indent);
-            return prefix + liContent.trim() + "\n";
-          }
-          case 'a': {
-            const href = node.getAttribute("href") || "";
-            return "[" + getInnerMarkdown(node, indentLevel) + "](" + href + ")";
-          }
-          case 'img': {
-            const src = node.getAttribute("src") || "";
-            const alt = node.getAttribute("alt") || "";
-            const title = node.getAttribute("title");
-            if (!src) return "";
-            return title ? "![" + alt + "](" + src + " \"" + title + "\")" : "![" + alt + "](" + src + ")";
-          }
-          case 'hr':
-            return "\n---\n\n";
-          case 'br':
-            return "\n";
-          case 'p':
-            return getInnerMarkdown(node, indentLevel) + "\n\n";
-          case 'table': {
-            const allRows = Array.from(node.querySelectorAll('tr'));
-            if (allRows.length === 0) return "";
-            const theadRows = Array.from(node.querySelectorAll('thead tr'));
-            let headerRow, bodyRows;
-            if (theadRows.length > 0) {
-              headerRow = theadRows[0];
-              bodyRows = allRows.filter(r => !theadRows.includes(r));
-            } else {
-              headerRow = allRows[0];
-              bodyRows = allRows.slice(1);
-            }
-            const cellsOf = (tr) => Array.from(tr.children).filter(c => /^t[hd]$/i.test(c.tagName));
-            const renderRow = (tr) => {
-              const cells = cellsOf(tr);
-              return "| " + cells.map(cell => {
-                const inner = getInnerMarkdown(cell, 0).trim().replace(/\|/g, '\\|').replace(/\n+/g, ' ');
-                return inner || ' ';
-              }).join(" | ") + " |";
-            };
-            const colCount = cellsOf(headerRow).length;
-            if (colCount === 0) return "";
-            let table = renderRow(headerRow) + "\n";
-            table += "|" + " --- |".repeat(colCount) + "\n";
-            bodyRows.forEach(tr => { table += renderRow(tr) + "\n"; });
-            return "\n" + table + "\n";
-          }
-          case 'span': {
-            let text = getInnerMarkdown(node, indentLevel);
-            // Check classes for formatting
-            let isBold = node.classList.contains("ql-bold");
-            let isItalic = node.classList.contains("ql-italic");
-            // Also check inline style if classes are not present.
-            if (!isBold && node.style && node.style.fontWeight) {
-              const weight = node.style.fontWeight;
-              if (weight === "bold" || parseInt(weight) >= 600) {
-                isBold = true;
-              }
-            }
-            if (!isItalic && node.style && node.style.fontStyle) {
-              const style = node.style.fontStyle;
-              if (style === "italic") {
-                isItalic = true;
-              }
-            }
-            let trailingSpaces = '';
-            let mainText = text;
-            let match = text.match(/(\s+)$/);
-            if (match) {
-              trailingSpaces = match[1];
-              mainText = text.slice(0, -trailingSpaces.length);
-            }
-            if (isBold && isItalic) {
-              return "***" + mainText + "***" + trailingSpaces;
-            } else if (isBold) {
-              return "**" + mainText + "**" + trailingSpaces;
-            } else if (isItalic) {
-              return "*" + mainText + "*" + trailingSpaces;
-            }
-            return text;
-          }
-          default:
-            return getInnerMarkdown(node, indentLevel);
-        }
-      }
-      return "";
-    }
-
-    // Process all child nodes of a given node.
-    function getInnerMarkdown(node, indentLevel) {
-      let result = "";
-      node.childNodes.forEach(child => {
-        result += convertNodeToMarkdown(child, indentLevel);
-      });
-      return result;
-    }
-
-    // DOM element for the markdown output.
-    const outputElement = document.getElementById('output');
-
-    // Full pipeline: HTML string → cleaned Markdown string.
-    function convert(html) {
-      return unescapeOverEscaped(stripImages(stripWrappingFence(convertToMarkdown(html))));
-    }
-
-    // Escape a plain-text clipboard payload so the converter treats it as text.
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // Convert, write to the output pane, auto-copy, and flash "Copied".
-    function render(html) {
-      const markdown = convert(html);
-      if (!markdown) return;
-      outputElement.textContent = markdown;
-
-      navigator.clipboard.writeText(markdown).then(() => {
-        const notification = document.getElementById('pastedNotification');
-        notification.style.opacity = '1';
-        setTimeout(() => {
-          notification.style.opacity = '0';
-        }, 3000);
-      }).catch(err => {
-        console.error("Could not copy text: ", err);
-      });
-    }
-
-    // Global paste capture: fires no matter what's focused (or when nothing is).
-    // Reads rich HTML when present, falls back to plain text. preventDefault
-    // stops the browser also pasting into any focused field on the page.
-    document.addEventListener('paste', (e) => {
-      const data = e.clipboardData;
-      if (!data) return;
-      const html = data.getData('text/html');
-      const text = data.getData('text/plain');
-      if (!html && !text) return;
-      e.preventDefault();
-      try {
-        render(html || escapeHtml(text));
-      } catch (err) {
-        console.error("Error converting content: ", err);
-        outputElement.textContent = "Error converting content.";
-      }
-    });
-  </script>
+  <script src="js/vendor/marked.umd.js"></script>
+  <script src="js/clean-html.js"></script>
+  <script src="js/to-markdown.js"></script>
+  <script src="js/to-text.js"></script>
+  <script src="js/convert.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

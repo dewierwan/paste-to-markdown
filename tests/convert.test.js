@@ -1,38 +1,21 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { loadSite } from './load.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const indexPath = resolve(__dirname, '..', 'index.html');
-const fixturesDir = resolve(__dirname, 'fixtures');
+const fixturesDir = resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
 let convertToMarkdown;
 let stripImages;
 let stripWrappingFence;
 let unescapeOverEscaped;
+let convertClip;
 
 beforeAll(() => {
-  const html = readFileSync(indexPath, 'utf-8');
-  const virtualConsole = new VirtualConsole();
-  const dom = new JSDOM(html, { runScripts: 'dangerously', virtualConsole });
-  convertToMarkdown = dom.window.convertToMarkdown;
-  stripImages = dom.window.stripImages;
-  stripWrappingFence = dom.window.stripWrappingFence;
-  unescapeOverEscaped = dom.window.unescapeOverEscaped;
-  if (typeof convertToMarkdown !== 'function') {
-    throw new Error('convertToMarkdown not found on JSDOM window — index.html script may have failed to execute.');
-  }
-  if (typeof stripImages !== 'function') {
-    throw new Error('stripImages not found on JSDOM window.');
-  }
-  if (typeof stripWrappingFence !== 'function') {
-    throw new Error('stripWrappingFence not found on JSDOM window.');
-  }
-  if (typeof unescapeOverEscaped !== 'function') {
-    throw new Error('unescapeOverEscaped not found on JSDOM window.');
-  }
+  const window = loadSite();
+  ({ convertToMarkdown, stripImages, stripWrappingFence, unescapeOverEscaped, convertClip } = window);
+  if (typeof convertToMarkdown !== 'function') throw new Error('convertToMarkdown not found — js/to-markdown.js may have failed to load.');
 });
 
 describe('headings', () => {
@@ -44,7 +27,7 @@ describe('headings', () => {
     ['<h5>X</h5>', '##### X'],
     ['<h6>X</h6>', '###### X'],
   ])('%s → %s', (input, expected) => {
-    expect(convertToMarkdown(input)).toBe(expected);
+    expect(convertClip({ html: input, text: '' }, 'rich', 'markdown').text).toBe(expected);
   });
 });
 
@@ -175,7 +158,8 @@ describe('links', () => {
 });
 
 // Real-world fixture corpus. Drop pairs of {scenario}.html and {scenario}.expected.md
-// into tests/fixtures/<source>/ to grow regression coverage.
+// into tests/fixtures/<source>/ to grow regression coverage. Runs the full paste
+// pipeline (HTML read as rich text, written as Markdown).
 describe('fixtures', () => {
   if (!existsSync(fixturesDir)) {
     it.skip('no fixtures directory yet', () => {});
@@ -200,7 +184,7 @@ describe('fixtures', () => {
       it(`${source}/${name}`, () => {
         const input = readFileSync(htmlPath, 'utf-8');
         const expected = readFileSync(expectedPath, 'utf-8').replace(/\n+$/, '');
-        expect(convertToMarkdown(input)).toBe(expected);
+        expect(convertClip({ html: input, text: '' }, 'rich', 'markdown').text).toBe(expected);
       });
     }
   }

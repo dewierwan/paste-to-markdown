@@ -6,12 +6,20 @@
     "artefacts",
     "blockquotes",
     "bluedot",
+    "cellspacing",
+    "colours",
     "Confluence",
     "cspell",
+    "Dewi",
     "fixturesDir",
+    "gdocs",
     "indentLevel",
     "jsdom",
     "markdownify",
+    "Menlo",
+    "normalise",
+    "normalised",
+    "Normalises",
     "Pandoc",
     "Prism",
     "Quill",
@@ -22,6 +30,7 @@
   ],
   "ignorePaths": [
     "node_modules/**",
-    "package-lock.json"
+    "package-lock.json",
+    "js/vendor/**"
   ]
 }

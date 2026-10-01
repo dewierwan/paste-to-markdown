@@ -1,0 +1,19 @@
+## Quick update
+
+Hi Sam, here is a **bold** point, an *italic* one, and [a link](https://bluedot.org/).  Two spaces.
+
+**Bold** [**bold link**](https://example.com/page?x=1) underlined ~~struck~~
+
+- First bullet
+  - Nested **bullet**
+- Second bullet
+
+1. Step one
+2. Step two
+   1. Sub-step
+
+Red highlighted text<sup>2</sup>
+
+Best,
+
+Dewi

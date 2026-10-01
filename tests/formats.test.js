@@ -1,0 +1,132 @@
+import { describe, it, expect, beforeAll } from 'vitest';
+import { loadSite, fixture } from './load.js';
+
+let w;
+beforeAll(() => { w = loadSite(); });
+
+const docs = () => fixture('gdocs/email-draft.html');
+const NOTION_TYPES = ['text/plain', 'text/html', 'text/_notion-blocks-v3-production'];
+
+describe('detect', () => {
+  it('Google Docs', () => expect(w.detect({ html: docs(), text: 'x' })).toEqual({ source: 'gdocs', read: 'rich' }));
+  it('Notion, by its clipboard type', () => expect(w.detect({ html: '<p>x</p>', text: 'x', types: NOTION_TYPES }).source).toBe('notion'));
+  it('Word', () => expect(w.detect({ html: '<p class="MsoNormal">x</p>', text: 'x' }).source).toBe('word'));
+  it('Markdown text', () => expect(w.detect({ html: '', text: '# Title\n\nSome **bold**' })).toEqual({ source: 'markdown', read: 'markdown' }));
+  it('plain text', () => expect(w.detect({ html: '', text: 'Hello there\nSecond line' })).toEqual({ source: 'text', read: 'text' }));
+  it('Markdown from a code editor (coloured HTML, no formatting)', () => {
+    const html = '<div style="font-family: Menlo"><span style="color:#569cd6">## Heading</span></div>';
+    expect(w.detect({ html, text: '## Heading\n- a\n- b' }).read).toBe('markdown');
+  });
+  it('real rich text with Markdown-looking text stays rich', () => {
+    expect(w.detect({ html: '<ul><li>a</li><li>b</li></ul>', text: '- a\n- b' }).read).toBe('rich');
+  });
+});
+
+describe('Google Docs → rich text (email)', () => {
+  it('keeps formatting, drops fonts and spacing, rebuilds nested lists', () => {
+    const { html } = w.convertClip({ html: docs(), text: '' }, 'rich', 'rich');
+    expect(html).toBe([
+      '<div><b>Quick update</b></div>',
+      '<div>Hi Sam, here is a <b>bold</b> point, an <i>italic</i> one, and <a href="https://bluedot.org/">a link</a>. &nbsp;Two spaces.</div>',
+      '<div><br></div>',
+      '<div><b>Bold </b><a href="https://example.com/page?x=1"><b>bold link</b></a><u> underlined</u><s> struck</s></div>',
+      '<div><br></div>',
+      '<ul style="margin-top:0;margin-bottom:0"><li>First bullet<ul style="margin-top:0;margin-bottom:0"><li>Nested <b>bullet</b></li></ul></li><li>Second bullet</li></ul>',
+      '<div><br></div>',
+      '<ol style="margin-top:0;margin-bottom:0"><li>Step one</li><li>Step two<ol type="a" style="margin-top:0;margin-bottom:0"><li>Sub-step</li></ol></li></ol>',
+      '<div><br></div>',
+      '<div>Red highlighted text<sup>2</sup></div>',
+      '<div><br></div>',
+      '<div>Best,</div>',
+      '<div>Dewi</div>',
+    ].join(''));
+  });
+
+  it('a partial selection inside one paragraph stays inline', () => {
+    const html = '<b style="font-weight:normal;" id="docs-internal-guid-x"><span style="font-weight:400;">just </span><span style="font-weight:700;">this</span></b>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'rich').html).toBe('just <b>this</b>');
+  });
+
+  it('turns "space after paragraph" into a blank line', () => {
+    const p = (t) => `<p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:12pt;"><span style="font-weight:400">${t}</span></p>`;
+    const html = `<b style="font-weight:normal" id="docs-internal-guid-y">${p('One')}${p('Two')}</b>`;
+    expect(w.convertClip({ html, text: '' }, 'rich', 'rich').html).toBe('<div>One</div><div><br></div><div>Two</div>');
+  });
+
+  it('drops unsafe links but keeps the text', () => {
+    expect(w.convertClip({ html: '<p><a href="javascript:alert(1)">x</a></p>', text: '' }, 'rich', 'rich').html).toBe('<div>x</div>');
+  });
+});
+
+describe('Google Docs → Markdown', () => {
+  it('ignores the Docs <b style="font-weight:normal"> wrapper', () => {
+    const html = '<b style="font-weight:normal;" id="docs-internal-guid-x"><p><span style="font-weight:400">plain </span><span style="font-weight:700">bold</span></p></b>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('plain **bold**');
+  });
+});
+
+describe('Notion and web HTML → rich text', () => {
+  it('puts blank lines between paragraphs, headings and lists', () => {
+    const html = '<h2>Notes</h2><p>First <strong>bold</strong>.</p><p>Second.</p><ul><li>a</li></ul><p>After</p>';
+    expect(w.convertClip({ html, text: '', types: NOTION_TYPES }, 'rich', 'rich').html).toBe(
+      '<div><b>Notes</b></div><div><br></div><div>First <b>bold</b>.</div><div><br></div><div>Second.</div><div><br></div>' +
+      '<ul style="margin-top:0;margin-bottom:0"><li>a</li></ul><div><br></div><div>After</div>',
+    );
+  });
+
+  it('collapses runs of empty paragraphs', () => {
+    expect(w.convertClip({ html: '<p>a</p><p>&nbsp;</p><p></p><p>b</p>', text: '' }, 'rich', 'rich').html)
+      .toBe('<div>a</div><div><br></div><div>b</div>');
+  });
+});
+
+describe('Markdown → other outputs', () => {
+  const md = '# Plan\n\nShip **the program** by *15 Nov*. See [doc](https://example.com).\n\n- One\n- Two with `code`\n  - Nested\n\nThanks,\nDewi';
+
+  it('rich text', () => {
+    expect(w.convertClip({ html: '', text: md }, 'markdown', 'rich').html).toBe(
+      '<div><b>Plan</b></div><div><br></div>' +
+      '<div>Ship <b>the program</b> by <i>15 Nov</i>. See <a href="https://example.com">doc</a>.</div><div><br></div>' +
+      '<ul style="margin-top:0;margin-bottom:0"><li>One</li><li>Two with <font face="monospace">code</font>' +
+      '<ul style="margin-top:0;margin-bottom:0"><li>Nested</li></ul></li></ul><div><br></div>' +
+      '<div>Thanks,<br>Dewi</div>',
+    );
+  });
+
+  it('WhatsApp', () => {
+    expect(w.convertClip({ html: '', text: md }, 'markdown', 'whatsapp').text).toBe(
+      '*Plan*\n\nShip *the program* by _15 Nov_. See doc (https://example.com).\n\n- One\n- Two with `code`\n    - Nested\n\nThanks,\nDewi',
+    );
+  });
+
+  it('plain text', () => {
+    expect(w.convertClip({ html: '', text: md }, 'markdown', 'plain').text).toBe(
+      'Plan\n\nShip the program by 15 Nov. See doc (https://example.com).\n\n• One\n• Two with code\n    • Nested\n\nThanks,\nDewi',
+    );
+  });
+
+  it('Markdown passes through unchanged', () => {
+    expect(w.convertClip({ html: '', text: md }, 'markdown', 'markdown').text).toBe(md);
+  });
+});
+
+describe('WhatsApp markers', () => {
+  it('keep spaces outside the markers', () => {
+    expect(w.convertClip({ html: '<p><b>bold </b>text</p>', text: '' }, 'rich', 'whatsapp').text).toBe('*bold* text');
+  });
+  it('show a link once when its text is the URL', () => {
+    expect(w.convertClip({ html: '<p><a href="https://a.com">https://a.com</a></p>', text: '' }, 'rich', 'whatsapp').text).toBe('https://a.com');
+  });
+});
+
+describe('Markdown writer fixes', () => {
+  it('nests lists inside list items', () => {
+    expect(w.convertToMarkdown('<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul>')).toBe('- a\n  - b\n- c');
+  });
+  it('indents lists under numbered items by three spaces', () => {
+    expect(w.convertToMarkdown('<ol><li>a<ol><li>b</li></ol></li></ol>')).toBe('1. a\n   1. b');
+  });
+  it('moves edge spaces outside bold and strikethrough', () => {
+    expect(w.convertToMarkdown('<p><b>Bold </b>x<s> gone</s></p>')).toBe('**Bold** x ~~gone~~');
+  });
+});

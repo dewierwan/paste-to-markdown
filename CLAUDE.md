@@ -2,6 +2,7 @@
 
 ## Build & Development Commands
 - **Run development server:** Open `index.html` directly in a browser
+- **Tests:** `npm test` (vitest + jsdom; `tests/load.js` loads the scripts in `index.html` order)
 - **Spell check:** `npx cspell "**/*.{html,js,md,json}"`
 - **Validate HTML:** `npx html-validate index.html`
 
@@ -26,6 +27,8 @@
 - Handle special characters and formatting correctly
 
 ## Project Structure
-- Keep HTML, CSS, and JavaScript in single `index.html` file
+- No build step: `index.html`, `css/app.css`, and classic scripts in `js/` that attach functions to `globalThis`
+- Pipeline: `js/convert.js` detects the source and reads every paste into HTML; `js/clean-html.js`, `js/to-markdown.js` and `js/to-text.js` write the outputs; `js/app.js` is the page wiring
+- Third-party code lives in `js/vendor/` unmodified (currently marked, MIT)
+- When adding a script, add it to both `index.html` and `tests/load.js`
 - Store image assets in root directory
-- Use descriptive filenames for all assets

@@ -1,24 +1,29 @@
-# Paste to Markdown
+# Paste to Markdown, rich text, WhatsApp or plain text
 
-Paste rich text. Get clean Markdown. Copied automatically.
+Paste rich text or Markdown. Pick where it's going. Get a clean version, copied automatically.
 
 Live at **[paste-to.md](https://paste-to.md)**.
 
-Most rich-text editors export Markdown full of artefacts: Notion's wrapping divs, Google Docs' span soup, Airtable's nested formatting. This single-page app strips all of it and gives you something you can drop into a README, a PR description, or a Slack post.
+Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion's wrapping divs, Word's `Mso` styles, Claude's raw Markdown asterisks. This page reads any of them and writes one of four clean outputs:
+
+| Output | For |
+|---|---|
+| Markdown | Claude, ChatGPT, GitHub, Obsidian, Notion |
+| Rich text | Gmail, Outlook, Google Docs, Slack, Notion, Airtable: links, bold, italics and lists kept; fonts, sizes, colours and spacing dropped |
+| WhatsApp | WhatsApp and Signal: `*bold*`, `_italic_`, `~strike~` |
+| Plain text | LinkedIn, text messages, forms |
 
 ## Features
 
-- No install, no build, one HTML file
-- Auto-copies output to your clipboard
-- Headings (h1–h6), bold, italic, strikethrough, highlight, sub/superscript, inline code, code blocks (with language hints), blockquotes, links, images
-- Ordered, unordered, and nested lists; checkboxes (Notion to-dos, Google Docs checklists)
-- Tables (GitHub-flavoured Markdown)
-- Horizontal rules
-- Escapes Markdown-significant characters in your text so "5 \* 3" stays as "5 \\* 3" instead of becoming italic
+- Paste anywhere on the page; the result is auto-copied. Switching output re-copies the same paste.
+- Detects the source (Google Docs, Notion, Word, Gmail, Markdown, plain text) and lets you override how it's read.
+- Headings, bold, italic, strikethrough, links, nested bullet and numbered lists, checkboxes, code, quotes and tables.
+- Fixes Google Docs quirks: the `<b style="font-weight:normal">` wrapper, formatting stored in inline styles, flattened nested lists, `google.com/url?q=` redirect links and "space after paragraph" spacing.
+- No build step. Static HTML, CSS and JavaScript.
 
 ## Privacy
 
-100% client-side. The page is static HTML and JavaScript — your pasted content never leaves your browser.
+100% client-side. Nothing you paste leaves your browser.
 
 ## Run locally
 
@@ -27,18 +32,20 @@ git clone https://github.com/dewierwan/paste-to-markdown
 open paste-to-markdown/index.html
 ```
 
-That is the whole setup for using the site. No `npm install` needed.
+## How it works
+
+Every paste is read into HTML (`js/convert.js` detects the source; Markdown is parsed with the vendored [marked](https://github.com/markedjs/marked)), then written out:
+
+- `js/clean-html.js` normalises HTML to a small, predictable subset (the rich text output, and the input to the text writers).
+- `js/to-markdown.js` writes Markdown.
+- `js/to-text.js` writes WhatsApp and plain text.
+- `js/app.js` wires up the page.
+
+Adding an input or an output means writing one function, not one per pair.
 
 ## Contributing
 
-All conversion logic lives in `index.html`, inside `convertNodeToMarkdown`. PRs welcome, especially for:
-
-- New element types
-- Better support for a specific source (Slack, Confluence, Linear, Quip)
-- Whitespace and nesting edge cases
-- Real-world HTML fixtures under `tests/fixtures/<source>/<scenario>.html` paired with `<scenario>.expected.md`
-
-Run the contributor checks before opening a PR:
+Real-world fixtures are the most useful contribution: put a clipboard HTML sample in `tests/fixtures/<source>/<scenario>.html` with the expected Markdown in `<scenario>.expected.md`.
 
 ```sh
 npm install
@@ -46,8 +53,6 @@ npm test
 npm run lint:spell
 npm run lint:html
 ```
-
-`npm install` is contributor-only — end users still just open `index.html`.
 
 ## License
 
