@@ -105,14 +105,17 @@ body {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  position: relative;
 }
 
+/* The "Copied" note floats in the card's top-right corner, so it takes no
+   space above the card. */
 .section-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  min-height: 22px;
-  margin-bottom: 12px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .copy-flash {
