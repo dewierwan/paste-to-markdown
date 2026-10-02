@@ -335,18 +335,39 @@ body {
 
 .copy-flash { white-space: nowrap; }
 
-@media (max-width: 480px) {
-  /* Labels sit above full-width pill groups of three columns. Columns never
-     shrink below their widest label, so "Email & Slack" stays on one line. */
-  .controls { gap: 14px; }
-  .control-row { grid-template-columns: 1fr; gap: 6px; }
+/* Not enough room for the hint beside the pills: put it underneath, lined up
+   with the first pill's text (container padding + border + pill padding). */
+@media (max-width: 900px) {
+  .control-row { grid-template-columns: 36px minmax(0, 1fr); row-gap: 6px; }
+  .control-row .pills { justify-self: start; }
+  .control-row .hint { grid-column: 2; padding-left: 19px; }
+  .hint:empty { display: none; }
+}
+
+@media (max-width: 720px) {
+  .control-row .hint { padding-left: 16px; }
+}
+
+/* Too narrow for a single segmented group: labels go above, and each option
+   becomes its own chip, so wrapping onto a second line looks intentional. */
+@media (max-width: 560px) {
+  .controls { gap: 16px; }
+  .control-row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
+  .control-row .hint { grid-column: 1; padding-left: 0; }
   .pills {
-    display: grid;
-    border-radius: 18px;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border: 0;
   }
-  .pills-from,
-  .pills:not(.pills-from) { grid-template-columns: repeat(3, minmax(max-content, 1fr)); }
-  .pill { padding: 6px 8px; }
+  .pill {
+    font-size: 14px;
+    padding: 7px 14px;
+    background: var(--card);
+    border: 1px solid var(--rule);
+  }
+  .pill[aria-pressed="true"] { border-color: var(--accent); }
+  .pills-from .pill[aria-pressed="true"] { border-color: var(--accent-bg); }
 }
 
 /* On short or narrow screens the header and controls leave too little room for
@@ -370,4 +391,4 @@ html.is-extension .card { min-height: 0; flex: 1; }
 html.is-extension .page-footer { margin-top: 12px; }
 html.is-extension .control-row { grid-template-columns: 36px minmax(0, 1fr); row-gap: 2px; }
 html.is-extension .control-row .pills { justify-self: start; }
-html.is-extension .control-row .hint { grid-column: 2; padding-left: 4px; }
+html.is-extension .control-row .hint { grid-column: 2; padding-left: 16px; }
