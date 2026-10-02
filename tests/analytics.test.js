@@ -32,8 +32,17 @@ describe('analytics', () => {
     expect(sent[1].body.payload).toMatchObject({ name: 'paste', data: { source: 'gdocs', format: 'markdown' } });
   });
 
-  it('sends nothing from the extension popup, local files or other hosts', () => {
-    for (const url of ['chrome-extension://abc/index.html', 'file:///index.html', 'http://localhost:8000/', 'https://dewierwan.github.io/pasteinto/']) {
+  it('reports the extension popup as the page /extension', () => {
+    const { window, sent } = run('chrome-extension://abcdefghijklmnop/index.html');
+    window.track('format', { format: 'slack' });
+    expect(sent.map((s) => s.body.payload)).toMatchObject([
+      { hostname: 'pasteinto.com', url: '/extension' },
+      { hostname: 'pasteinto.com', url: '/extension', name: 'format', data: { format: 'slack' } },
+    ]);
+  });
+
+  it('sends nothing from local files or other hosts', () => {
+    for (const url of ['file:///index.html', 'http://localhost:8000/', 'https://dewierwan.github.io/pasteinto/']) {
       const { window, sent } = run(url);
       window.track('paste', { source: 'gdocs' });
       expect(sent).toEqual([]);
