@@ -33,6 +33,8 @@ To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpac
 
 100% client-side. Nothing you paste leaves your browser.
 
+On pasteinto.com, `js/analytics.js` sends anonymous usage counts to [Umami Cloud](https://umami.is/) with no cookies: pageviews, plus events naming the detected source app and the output format. It never sends pasted content. The Chrome extension sends nothing.
+
 ## Run locally
 
 ```sh

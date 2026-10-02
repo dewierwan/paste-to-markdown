@@ -10,6 +10,8 @@
   };
   const STORAGE_KEY = 'paste-to.output';
   const APP_SOURCES = ['gdocs', 'notion', 'word', 'gmail', 'airtable', 'pdf'];
+  // Anonymous usage counts from js/analytics.js; a no-op if it didn't load.
+  const track = globalThis.track || (() => {});
 
   const output = document.getElementById('output');
   const flash = document.getElementById('copyFlash');
@@ -29,7 +31,10 @@
   selectOutput(current, false);
 
   pills.forEach((pill) => {
-    pill.addEventListener('click', () => selectOutput(pill.dataset.output, true));
+    pill.addEventListener('click', () => {
+      selectOutput(pill.dataset.output, true);
+      track('format', { format: current, pasted: Boolean(clip) });
+    });
   });
 
   readPills.forEach((pill) => {
@@ -37,6 +42,8 @@
       readAs = pill.dataset.read;
       showReadAs();
       render(true);
+      // A changed "From" choice suggests detection got this paste wrong.
+      track('read_as', { read: readAs, detected: detected ? detected.read : null });
     });
   });
 
@@ -59,6 +66,7 @@
     sourceHint.textContent = app ? `Detected ${app}` : 'Detected automatically';
     showReadAs();
     render(true);
+    track('paste', { source: detected.source, format: current });
   });
 
   function showReadAs() {
@@ -81,6 +89,7 @@
       result = convertClip(clip, readAs, current);
     } catch (err) {
       console.error('Error converting content:', err);
+      track('convert_failed', { format: current });
       output.className = 'output-content is-text';
       output.textContent = 'Could not convert this paste.';
       return;
@@ -110,6 +119,7 @@
       showFlash('Copied', false);
     } catch (err) {
       console.error('Could not copy:', err);
+      track('copy_failed', { format: current });
       showFlash('Copy failed', true);
     }
   }
