@@ -3,10 +3,10 @@
 (function () {
   const OUTPUTS = {
     markdown: { noun: 'markdown', hint: 'Claude, ChatGPT, GitHub, Obsidian and Notion' },
-    email: { noun: 'email and Slack text', hint: 'Gmail, Outlook and Slack' },
-    rich: { noun: 'rich text', hint: 'Google Docs, Notion and Airtable' },
+    email: { noun: 'email and Slack text', hint: 'Gmail, Outlook, Slack and Teams' },
+    rich: { noun: 'rich text', hint: 'Google Docs, Word, Notion and Airtable' },
     whatsapp: { noun: 'WhatsApp text', hint: 'WhatsApp and Signal' },
-    plain: { noun: 'plain text', hint: 'LinkedIn, text messages and forms' },
+    plain: { noun: 'plain text', hint: 'LinkedIn, X, text messages and forms' },
   };
   const STORAGE_KEY = 'paste-to.output';
   const APP_SOURCES = ['gdocs', 'notion', 'word', 'gmail', 'airtable'];
