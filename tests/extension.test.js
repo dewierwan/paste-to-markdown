@@ -14,6 +14,14 @@ it('packs every file the extension popup needs', () => {
   expect(files.some((path) => path.startsWith('tests/') || path.startsWith('node_modules/'))).toBe(false);
 });
 
+// The Chrome Web Store rejects uploads that break its manifest limits.
+it('keeps manifest.json within Chrome Web Store limits', () => {
+  const manifest = JSON.parse(readFileSync(resolve(root, 'manifest.json'), 'utf-8'));
+  expect(manifest.name.length).toBeLessThanOrEqual(75);
+  expect(manifest.description.length).toBeLessThanOrEqual(132);
+  expect(manifest.action.default_title.length).toBeLessThanOrEqual(75);
+});
+
 // Chrome extensions refuse inline scripts, inline event handlers and remote code.
 it('keeps index.html loadable as an extension page', () => {
   expect(html).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>/);
