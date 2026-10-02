@@ -23,6 +23,12 @@ Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion'
 - Fixes Google Docs quirks: the `<b style="font-weight:normal">` wrapper, formatting stored in inline styles, flattened nested lists, `google.com/url?q=` redirect links and "space after paragraph" spacing.
 - No build step. Static HTML, CSS and JavaScript.
 
+## Chrome extension
+
+The same files are also a Chrome extension: `manifest.json` opens `index.html` as the toolbar popup. Click the paperclip (or press Alt+Shift+V, which you can change at `chrome://extensions/shortcuts`), paste, and the result is copied.
+
+To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick this folder. `npm run pack:extension` writes the Chrome Web Store upload to `dist/`; bump `version` in `manifest.json` first for each release.
+
 ## Privacy
 
 100% client-side. Nothing you paste leaves your browser.

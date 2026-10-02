@@ -33,3 +33,5 @@
 - When adding a script, add it to both `index.html` and `tests/load.js`
 - After changing any file in `css/` or `js/`, run `npm run stamp` (updates the `?v=` content hashes in `index.html` so browsers don't mix new and cached files; a test fails if you forget)
 - Store image assets in root directory
+- `index.html` is also the Chrome extension popup (`manifest.json`). Keep it free of inline scripts, inline event handlers and remote code, which extensions refuse (a test checks). Popup-only styles go under `html.is-extension`, set by `js/extension.js`
+- `npm run pack:extension` zips the files the page references into `dist/` for the Chrome Web Store; bump `version` in `manifest.json` for each release

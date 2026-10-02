@@ -1,13 +1,14 @@
 {
   "name": "pasteinto",
   "private": true,
-  "description": "Tests + lint scaffolding. The site itself stays a single self-contained index.html.",
+  "description": "Tests + lint scaffolding. The site itself stays static files with no build step; the same files are the Chrome extension.",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "lint:spell": "cspell \"**/*.{html,js,md,json}\"",
     "lint:html": "html-validate index.html",
-    "stamp": "node scripts/stamp.mjs"
+    "stamp": "node scripts/stamp.mjs",
+    "pack:extension": "node scripts/pack-extension.mjs"
   },
   "devDependencies": {
     "cspell": "^8.0.0",

@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Paste Into",
+  "version": "1.0.0",
+  "description": "Paste from Google Docs, Notion, Word, Claude or anywhere. Get Markdown, email and Slack text, Docs, WhatsApp or plain text, auto-copied.",
+  "homepage_url": "https://pasteinto.com/",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Paste Into",
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+V" },
+      "description": "Open Paste Into"
+    }
+  }
+}
