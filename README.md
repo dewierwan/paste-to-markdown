@@ -33,7 +33,7 @@ To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpac
 
 100% client-side. Nothing you paste leaves your browser.
 
-On pasteinto.com and in the Chrome extension, `js/analytics.js` sends anonymous usage counts to [Umami Cloud](https://umami.is/) with no cookies: pageviews, plus events naming the detected source app and the output format. The Chrome extension sends the same counts, reported as the page `/extension`. It never sends pasted content.
+On pasteinto.com and in the Chrome extension, `js/analytics.js` sends anonymous usage counts to [Umami Cloud](https://umami.is/) with no cookies: pageviews, plus events naming the detected source app, the output format and how you pasted (keyboard, Paste button or long-press). The Chrome extension sends the same counts, reported as the page `/extension`. It never sends pasted content.
 
 ## Run locally
 
@@ -53,6 +53,29 @@ Every paste is read into HTML (`js/convert.js` detects the source; Markdown is p
 - `js/app.js` wires up the page.
 
 Adding an input or an output means writing one function, not one per pair.
+
+## Roadmap
+
+Ideas for later, roughly in order.
+
+### Convert in place (Chrome extension)
+
+Today every use is a round trip: copy, switch to Paste Into, paste, switch to the destination, paste. Instead, an extension shortcut (Alt+Shift+V) would convert whatever is on the clipboard for the site you're on, show a small "Ready for Gmail" note, and leave you to press ⌘V as usual. The site picks the output, the way the source is already detected:
+
+| Site | Output |
+|---|---|
+| Gmail, Outlook, Slack, Teams | Email & Slack |
+| Google Docs, Notion, Airtable | Docs |
+| Claude, ChatGPT, GitHub | Markdown |
+| WhatsApp Web | WhatsApp |
+| LinkedIn, X | Plain text |
+| Anything else | The last output used |
+
+Notes: a Manifest V3 service worker can't use the clipboard, so this needs an offscreen document, plus the `clipboardRead` and `clipboardWrite` permissions and `activeTab` for the site's address. `clipboardRead` adds an install warning ("Read data you copy and paste") and a fresh store review. It would replace the parked "Clean Paste for Gmail" extension.
+
+### Be found by people with the problem
+
+The page title lists features, but people search for the problem, especially pasting a ChatGPT or Claude answer into Docs or Gmail and getting stray asterisks. Add a few pages that are the same tool with From and To preset and one plain heading, for example "ChatGPT to Google Docs", "Claude to Gmail", "Markdown to Slack", "Google Docs to Markdown" and "Fix line breaks in text copied from a PDF". Check search volumes first to pick the pages, write the Chrome Web Store listing around the same problem, and use the analytics to see which pages bring people in. Keep each page as minimal as the home page.
 
 ## Contributing
 

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="paperclip.png">
   <link rel="preload" href="fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/iAWriterMonoS-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/app.css?v=82b609ed">
+  <link rel="stylesheet" href="css/app.css?v=124c8eec">
   <script src="js/extension.js?v=6aa5ea2a"></script>
 </head>
 <body>
@@ -43,10 +43,12 @@
 
     <div class="container">
       <section class="box output-box">
-        <div class="section-header">
-          <span id="copyFlash" class="copy-flash" role="status"></span>
-        </div>
+        <span id="status" class="visually-hidden" role="status"></span>
         <div class="card">
+          <div id="cardActions" class="card-actions" hidden>
+            <button type="button" id="pasteButton" class="card-action">Paste</button>
+            <button type="button" id="copyButton" class="card-action">Copy</button>
+          </div>
           <div id="output" class="output-content"></div>
         </div>
       </section>
@@ -64,6 +66,6 @@
   <script src="js/from-pdf.js?v=394482df"></script>
   <script src="js/convert.js?v=ac2d9b7b"></script>
   <script src="js/analytics.js?v=96ca48e7"></script>
-  <script src="js/app.js?v=6093c152"></script>
+  <script src="js/app.js?v=22e8cb10"></script>
 </body>
 </html>
