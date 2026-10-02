@@ -3,8 +3,8 @@
 (function () {
   const OUTPUTS = {
     markdown: { noun: 'markdown', hint: 'For Claude, ChatGPT, GitHub, Obsidian and Notion' },
-    email: { noun: 'email text', hint: 'For Gmail, Outlook and Slack: looks as if you wrote it there' },
-    rich: { noun: 'rich text', hint: 'For Google Docs, Notion and Airtable: headings kept' },
+    email: { noun: 'email and Slack text', hint: 'For Gmail, Outlook and Slack: looks as if you wrote it there' },
+    rich: { noun: 'rich text', hint: 'For Google Docs, Notion and Airtable' },
     whatsapp: { noun: 'WhatsApp text', hint: 'For WhatsApp and Signal: *bold*, _italic_, ~strike~' },
     plain: { noun: 'plain text', hint: 'For LinkedIn, text messages and forms' },
   };
