@@ -8,12 +8,11 @@
   <link rel="icon" type="image/png" href="paperclip.png">
   <link rel="preload" href="fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/iAWriterMonoS-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/app.css?v=f517e670">
+  <link rel="stylesheet" href="css/app.css?v=730586bd">
 </head>
 <body>
   <main class="page">
     <header class="page-header">
-      <div class="eyebrow">Paste Into</div>
       <h1>Paste anything. Get <span id="outputNoun">markdown</span>.</h1>
     </header>
 
@@ -25,7 +24,7 @@
           <button type="button" class="pill" data-read="rich" disabled>Rich text</button>
           <button type="button" class="pill" data-read="text" disabled>Plain text</button>
         </div>
-        <span id="sourceHint" class="hint">Detected when you paste</span>
+        <span id="sourceHint" class="hint"></span>
       </div>
       <div class="control-row">
         <span class="control-label" id="toLabel">To</span>
@@ -43,7 +42,6 @@
     <div class="container">
       <section class="box output-box">
         <div class="section-header">
-          <h3 class="section-label">Output</h3>
           <span id="copyFlash" class="copy-flash" role="status"></span>
         </div>
         <div class="card">
@@ -53,7 +51,7 @@
     </div>
 
     <footer class="page-footer">
-      <span>Runs in your browser. Nothing you paste is uploaded.</span>
+      <span>Nothing you paste leaves your browser.</span>
       <span class="dot">·</span>
       <a href="https://github.com/dewierwan/pasteinto">GitHub</a>
     </footer>
@@ -64,6 +62,6 @@
   <script src="js/to-markdown.js?v=eb9a166b"></script>
   <script src="js/to-text.js?v=34c0a88d"></script>
   <script src="js/convert.js?v=bb7eac47"></script>
-  <script src="js/app.js?v=a96aa277"></script>
+  <script src="js/app.js?v=7c2b3bf8"></script>
 </body>
 </html>

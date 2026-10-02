@@ -81,15 +81,6 @@ body {
   flex-shrink: 0;
 }
 
-.eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--accent-label);
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-
 .page-header h1 {
   font-family: var(--font-sans);
   font-size: 32px;
@@ -118,19 +109,10 @@ body {
 
 .section-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   min-height: 22px;
   margin-bottom: 12px;
-}
-
-.section-label {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--accent-label);
-  text-transform: uppercase;
 }
 
 .copy-flash {

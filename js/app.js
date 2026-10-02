@@ -2,11 +2,11 @@
 // Switching the output re-converts the last paste and copies again.
 (function () {
   const OUTPUTS = {
-    markdown: { noun: 'markdown', hint: 'For Claude, ChatGPT, GitHub, Obsidian and Notion' },
-    email: { noun: 'email and Slack text', hint: 'For Gmail, Outlook and Slack' },
-    rich: { noun: 'rich text', hint: 'For Google Docs, Notion and Airtable' },
-    whatsapp: { noun: 'WhatsApp text', hint: 'For WhatsApp and Signal: *bold*, _italic_, ~strike~' },
-    plain: { noun: 'plain text', hint: 'For LinkedIn, text messages and forms' },
+    markdown: { noun: 'markdown', hint: 'Claude, ChatGPT, GitHub, Obsidian and Notion' },
+    email: { noun: 'email and Slack text', hint: 'Gmail, Outlook and Slack' },
+    rich: { noun: 'rich text', hint: 'Google Docs and Airtable' },
+    whatsapp: { noun: 'WhatsApp text', hint: 'WhatsApp and Signal' },
+    plain: { noun: 'plain text', hint: 'LinkedIn, text messages and forms' },
   };
   const STORAGE_KEY = 'paste-to.output';
   const APP_SOURCES = ['gdocs', 'notion', 'word', 'gmail', 'airtable'];
