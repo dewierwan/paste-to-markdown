@@ -65,6 +65,39 @@ describe('a real Preview copy (HTML and text on the clipboard)', () => {
   }
 });
 
+describe('headings and bold from a Preview copy', () => {
+  const cocoa = (rules, body) => `<meta name="Generator" content="Cocoa HTML Writer"><style>${rules}</style><body>${body}</body>`;
+
+  it('turns larger-font lines into headings, ranked by size', () => {
+    const clip = { html: fixture('pdf/article.preview-clipboard.html'), text: pdf('article.preview') };
+    const html = w.pdfToHtml(clip.text, clip.html);
+    expect(html).toMatch(/^<h1>Building a Better Fellowship Program<\/h1><p>Over the past eighteen months/);
+    expect(html).toContain('<h2>Key findings</h2>');
+    expect(w.convertClip(clip, 'pdf', 'markdown').text).toMatch(/^# Building a Better Fellowship Program\n\nOver the past/);
+  });
+
+  it('keeps bold the HTML marks', () => {
+    const text = 'Our approach\nWe run short programs with a demanding application and a real project\nat the end, which matters more than anything else in the design.';
+    const html = cocoa('p.p1 {font: 11.0px Helvetica}', '<p class="p1">Our approach</p><p class="p1">We run <b>short programs</b> with a demanding application and a real project</p><p class="p1">at the end, which matters more than anything else in the design.</p>');
+    expect(w.pdfToHtml(text, html)).toContain('We run <b>short programs</b> with');
+  });
+
+  it('ignores HTML from other apps', () => {
+    const text = pdf('article.preview');
+    expect(w.pdfToHtml(text, '<p style="font-size:30px">Over the past eighteen months</p>')).toBe(w.pdfToHtml(text));
+  });
+
+  it('does not make headings of prose in a bigger font or of contents entries', () => {
+    const text = 'Contents\nIntroduction _____________ 3\nThis line of body text is set larger but ends mid-sentence and carries on\nhere in the normal size until the full stop.';
+    const html = cocoa('p.p1 {font: 18.0px Arial} p.p2 {font: 11.0px Arial} p.p3 {font: 13.0px Arial}',
+      '<p class="p1">Contents</p><p class="p1">Introduction _____________ 3</p><p class="p3">This line of body text is set larger but ends mid-sentence and carries on</p><p class="p2">here in the normal size until the full stop.</p><p class="p2">More body text to make the normal size the most common one in the copy.</p>');
+    const out = w.pdfToHtml(text, html);
+    expect(out).toContain('<h1>Contents</h1>');
+    expect(out).not.toMatch(/<h\d>Introduction/);
+    expect(out).not.toMatch(/<h\d>This line/);
+  });
+});
+
 describe('contents pages', () => {
   it('keeps each entry on its own line and drops the leaders', () => {
     const text = 'Contents\nIntroduction ______________________ 3\nWhat is the current state of frontier AI capabilities? __________ 4\nHow frontier AI works\n______________________________ 5\nLimitations of frontier AI _______ 9';

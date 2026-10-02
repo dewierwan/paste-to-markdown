@@ -2,9 +2,9 @@
 // Repairs text copied from a PDF viewer. PDFs store positioned lines, not
 // paragraphs, so a copy has a hard break at the end of every line, words split
 // by hyphens, ligature characters and page numbers, and (in Preview and Chrome)
-// no blank lines between paragraphs. Viewers put only plain text on the
-// clipboard, so bold and headings are already lost; this rebuilds paragraphs
-// and lists only.
+// no blank lines between paragraphs. This rebuilds paragraphs and lists from
+// the plain text. Preview also puts HTML on the clipboard with each line's font
+// size (and sometimes bold), which gives back headings and bold.
 (function (root) {
   const LIGATURES = { 'ﬀ': 'ff', 'ﬁ': 'fi', 'ﬂ': 'fl', 'ﬃ': 'ffi', 'ﬄ': 'ffl', 'ﬅ': 'st', 'ﬆ': 'st' };
   // PDF viewers mark line-end hyphens in different ways: Chrome (PDFium) writes
@@ -18,6 +18,8 @@
   const LEADER = /\s*[_.·…]{4,}\s*(\d{1,4})?$/;
   const LEADER_ONLY = /^\s*[_.·…]{4,}\s*\d{0,4}$/;
   const TOC_END = '\u0000'; // marks a contents entry while lines are joined
+  // A line ending like this carries on onto the next ("Standard and" / "Filing").
+  const CONTINUES = /(\b(and|or|of|the|a|an|for|to|in|on|with|from|by|at)|[,:–—-])$/i;
   const DROP_CAP = /^\p{Lu}$/u; // a large first letter on a line of its own
   const PAGE_NUMBER = /^(page\s+)?\d{1,4}(\s*(of|\/)\s*\d{1,4})?$/i;
   // Words often joined to the next with a real hyphen ("self-attention").
@@ -25,8 +27,10 @@
   const COMPOUND_SUFFIXES = new Set(['based', 'wise', 'like', 'free', 'level', 'scale', 'specific', 'related', 'driven', 'aware', 'oriented', 'wide', 'term', 'range', 'making', 'friendly', 'owned', 'led', 'up', 'out', 'off', 'in', 'on', 'down', 'time']);
   const COMPOUND_PREFIXES = new Set(['self', 'non', 'multi', 'well', 'mid', 'cross', 'half', 'semi', 'anti', 'ex', 'state', 'follow', 'long', 'short', 'high', 'low', 'full', 'part']);
 
-  function pdfToHtml(text) {
+  // html: the clipboard's HTML, if any; only Preview's (Cocoa HTML Writer) is used.
+  function pdfToHtml(text, html) {
     const lines = normalise(text);
+    const format = readFormatting(html);
     const width = typicalWidth(lines);
     const local = localWidths(lines, width);
     const words = wordCounts(lines);
@@ -36,6 +40,19 @@
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (!line) { block = null; continue; }
+      // A heading line starts its own block; a heading over two lines stays one.
+      const level = !line.includes(TOC_END) && format.headings.get(lineKey(line));
+      if (level) {
+        // A title (level 1) over two lines is one heading. Lower headings often sit
+        // together (on a contents page), so a line joins only if it carries on the
+        // one above ("Standard Deduction, and" / "Filing Information").
+        const carriesOn = block && block.type === 'h' && block.level === level &&
+          (level === 1 || CONTINUES.test(block.lines[block.lines.length - 1]) || /^\p{Ll}/u.test(line));
+        if (carriesOn) block.lines.push(line);
+        else blocks.push((block = { type: 'h', level, lines: [line], wraps: false }));
+        continue;
+      }
+      if (block && block.type === 'h') block = null;
       const marker = listMarker(line);
       if (!block || marker) {
         block = { type: marker ? marker.type : 'p', lines: [marker ? line.slice(marker.length) : line], wraps: false };
@@ -57,7 +74,58 @@
         blocks.push(block);
       }
     }
-    return render(blocks);
+    return render(blocks, format.bold);
+  }
+
+  // Compares a text line with an HTML line despite ligatures and spacing.
+  function lineKey(line) {
+    return line.replace(TOC_END, '').replace(/[ﬀﬁﬂﬃﬄﬅﬆ]/g, (c) => LIGATURES[c]).replace(/[\s\u00AD\uFFFE]+/g, ' ').trim();
+  }
+
+  // From Preview's HTML (one <p> per printed line, font sizes in a stylesheet):
+  // headings, as a map from line text to level 1–3, and the bold runs in order.
+  // Lines in a font clearly larger than the body text, short and worded like a
+  // heading, are headings; the sizes rank into levels. Other HTML gives nothing.
+  function readFormatting(html) {
+    const none = { headings: new Map(), bold: [] };
+    if (!html || !/Cocoa HTML Writer/.test(html)) return none;
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const sizes = {};
+    for (const [, tag, cls, rule] of (doc.querySelector('style')?.textContent || '').matchAll(/(p|span)\.(\w+)\s*\{([^}]*)\}/g)) {
+      const size = rule.match(/font:[^;]*?([\d.]+)px/);
+      if (size) sizes[`${tag}.${cls}`] = parseFloat(size[1]);
+    }
+    const lines = [];
+    const chars = new Map();
+    for (const p of doc.querySelectorAll('p')) {
+      const text = lineKey(p.textContent);
+      if (!text) continue;
+      // The size most of the line is in (a footnote mark is a smaller span).
+      const bySize = new Map();
+      for (const node of p.childNodes) {
+        const own = node.nodeType === 1 && node.className && sizes[`span.${node.className}`];
+        const size = own || sizes[`p.${p.className}`] || 0;
+        bySize.set(size, (bySize.get(size) || 0) + node.textContent.length);
+      }
+      const size = [...bySize].sort((a, b) => b[1] - a[1])[0][0];
+      lines.push({ text, size });
+      chars.set(size, (chars.get(size) || 0) + text.length);
+    }
+    if (!lines.length) return none;
+    const body = [...chars].sort((a, b) => b[1] - a[1])[0][0];
+    const big = (l) => l && l.size >= body * 1.15 && /\p{L}/u.test(l.text) && l.text.length <= 100 &&
+      l.text.split(/\s+/).length <= 12 && !/[.;]$/.test(l.text) && !LEADER.test(l.text);
+    // A heading starts with a capital or digit, unless it carries on the heading
+    // above; one that stops on "to" or "and" needs a heading line after it.
+    const isHeading = (l, i) => big(l) &&
+      (/^[\p{Lu}\d"“‘(]/u.test(l.text) || (big(lines[i - 1]) && lines[i - 1].size === l.size)) &&
+      (!CONTINUES.test(l.text) || (big(lines[i + 1]) && lines[i + 1].size === l.size));
+    const marked = lines.filter(isHeading);
+    const levels = [...new Set(marked.map((l) => l.size))].sort((a, b) => b - a);
+    const headings = new Map();
+    for (const l of marked) headings.set(l.text, Math.min(levels.indexOf(l.size) + 1, 3));
+    const bold = Array.from(doc.querySelectorAll('b'), (b) => lineKey(b.textContent).replace(new RegExp(`${HYPHEN}$`), '')).filter((t) => t.length > 1);
+    return { headings, bold };
   }
 
   function normalise(text) {
@@ -260,24 +328,56 @@
     return null;
   }
 
-  function render(blocks) {
+  function render(blocks, bold = []) {
     for (const block of blocks) block.lines = block.lines.map((l) => l.replace(TOC_END, ''));
+    markBold(blocks, bold);
+    const esc = (l) => escapeHtml(l).replace(/\u0001/g, '<b>').replace(/\u0002/g, '</b>');
     let html = '';
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
+      if (block.type === 'h') {
+        html += `<h${block.level}>${esc(block.lines.join(' ').replace(/[\u0001\u0002]/g, ''))}</h${block.level}>`;
+        continue;
+      }
       if (block.type === 'p') {
-        html += `<p>${block.lines.map(escapeHtml).join('<br>')}</p>`;
+        html += `<p>${block.lines.map(esc).join('<br>')}</p>`;
         continue;
       }
       // Group consecutive items of the same kind into one list. Numbered items
       // keep their own numbers as text, since lists in PDFs often skip or restart.
       const tag = block.type;
       let items = '';
-      while (i < blocks.length && blocks[i].type === tag) items += `<li>${escapeHtml(blocks[i++].lines.join(' '))}</li>`;
+      while (i < blocks.length && blocks[i].type === tag) items += `<li>${esc(blocks[i++].lines.join(' '))}</li>`;
       i--;
       html += tag === 'ul' ? `<ul>${items}</ul>` : items.replace(/<\/?li>/g, (t) => (t === '<li>' ? '<p>' : '</p>'));
     }
     return html;
+  }
+
+  // Wraps each bold run (in document order) in \u0001…\u0002 where it next
+  // appears. A run not found in the next few blocks is skipped, so one mismatch
+  // can't stall the rest.
+  function markBold(blocks, bold) {
+    let run = 0;
+    for (let b = 0; b < blocks.length && run < bold.length; b++) {
+      const lines = blocks[b].lines;
+      let li = 0;
+      let from = 0;
+      while (run < bold.length && li < lines.length) {
+        const at = lines[li].indexOf(bold[run], from);
+        if (at >= 0) {
+          lines[li] = `${lines[li].slice(0, at)}\u0001${bold[run]}\u0002${lines[li].slice(at + bold[run].length)}`;
+          from = at + bold[run].length + 2;
+          run++;
+        } else if (li + 1 < lines.length) {
+          li++;
+          from = 0;
+        } else {
+          const ahead = blocks.slice(b + 1, b + 4).some((x) => x.lines.some((l) => l.includes(bold[run])));
+          if (!ahead) { run++; li = 0; from = 0; } else break;
+        }
+      }
+    }
   }
 
   // A paste looks like PDF text when it is plain text only and several long

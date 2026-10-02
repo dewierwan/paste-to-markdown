@@ -104,7 +104,7 @@
     let html;
     if (readAs === 'rich') html = clip.html || textToHtml(clip.text);
     else if (readAs === 'markdown') html = marked.parse(clip.text || '', { gfm: true });
-    else if (readAs === 'pdf') html = pdfToHtml(clip.text);
+    else if (readAs === 'pdf') html = pdfToHtml(clip.text, clip.html);
     else html = textToHtml(clip.text);
 
     if (output === 'markdown') {
