@@ -371,11 +371,12 @@ body {
 }
 
 /* On short or narrow screens the header and controls leave too little room for
-   a fixed-height card, so let the page scroll and give the card a usable height. */
+   a fixed-height card, so let the page scroll and give the card a usable height.
+   The card still grows into any spare height, so the footer stays right below it. */
 @media (max-width: 480px), (max-height: 600px) {
   html, body { overflow: auto; }
   .page { height: auto; min-height: 100vh; }
-  .card { min-height: 60vh; flex: none; }
+  .card { min-height: 60vh; flex: 1 0 auto; }
 }
 
 /* Chrome extension popup (js/extension.js adds the class). Chrome caps popups
