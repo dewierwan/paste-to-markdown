@@ -28,7 +28,7 @@
 
 ## Project Structure
 - No build step: `index.html`, `css/app.css`, and classic scripts in `js/` that attach functions to `globalThis`
-- Pipeline: `js/convert.js` detects the source and reads every paste into HTML; `js/clean-html.js`, `js/to-markdown.js` and `js/to-text.js` write the outputs; `js/app.js` is the page wiring
+- Pipeline: `js/convert.js` detects the source and reads every paste into HTML (`js/from-pdf.js` for PDF text); `js/clean-html.js`, `js/to-markdown.js` and `js/to-text.js` write the outputs; `js/app.js` is the page wiring
 - Third-party code lives in `js/vendor/` unmodified (currently marked, MIT)
 - When adding a script, add it to both `index.html` and `tests/load.js`
 - After changing any file in `css/` or `js/`, run `npm run stamp` (updates the `?v=` content hashes in `index.html` so browsers don't mix new and cached files; a test fails if you forget)

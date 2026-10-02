@@ -5,7 +5,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SCRIPTS = ['js/vendor/marked.umd.js', 'js/clean-html.js', 'js/to-markdown.js', 'js/to-text.js', 'js/convert.js'];
+const SCRIPTS = ['js/vendor/marked.umd.js', 'js/clean-html.js', 'js/to-markdown.js', 'js/to-text.js', 'js/from-pdf.js', 'js/convert.js'];
 
 export function loadSite() {
   const dom = new JSDOM('<!DOCTYPE html><body></body>', { runScripts: 'outside-only', virtualConsole: new VirtualConsole() });

@@ -1,0 +1,24 @@
+1. Introduction
+This document sets out the operating plan for the next financial
+year. It covers staffing, budget and the main risks we expect to
+face, together with the actions we will take to manage them.
+1.1 Scope
+The plan applies to all programs run from the San Francisco and
+London offices. It does not cover affiliated projects that have their
+own governance arrangements.
+2. Priorities
+Grow the number of placements into high-impact roles.
+Expand employer partnerships in government.
+Track outcomes for at least two years after each
+program.
+Strengthen operations so that the team can run more
+programs without burning out.
+Area Budget Owner
+Programs $4.2M Delivery team
+Operations $1.1M Head of Operations
+3. Code sample
+function score(applicant) {
+return applicant.experience * 2 + applicant.motivation;
+}
+The scoring function above is illustrative only and is not used for
+real decisions.

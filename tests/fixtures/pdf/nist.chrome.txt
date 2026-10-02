@@ -1,0 +1,25 @@
+NIST AI 100-1 AI RMF 1.0
+Fig. 1. Examples of potential harms related to AI systems. Trustworthy AI systems and their
+responsible use can mitigate negative risks and contribute to benefits for people, organizations, and
+ecosystems.
+1.2 Challenges for AI Risk Management
+Several challenges are described below. They should be taken into account when managing
+risks in pursuit of AI trustworthiness.
+1.2.1 Risk Measurement
+AI risks or failures that are not well-defined or adequately understood are difficult to mea￾sure quantitatively or qualitatively. The inability to appropriately measure AI risks does not
+imply that an AI system necessarily poses either a high or low risk. Some risk measurement
+challenges include:
+Risks related to third-party software, hardware, and data: Third-party data or systems
+can accelerate research and development and facilitate technology transition. They also
+may complicate risk measurement. Risk can emerge both from third-party data, software or
+hardware itself and how it is used. Risk metrics or methodologies used by the organization
+developing the AI system may not align with the risk metrics or methodologies uses by
+the organization deploying or operating the system. Also, the organization developing
+the AI system may not be transparent about the risk metrics or methodologies it used. Risk
+measurement and management can be complicated by how customers use or integrate third￾party data or systems into AI products or services, particularly without sufficient internal
+governance structures and technical safeguards. Regardless, all parties and AI actors should
+manage risk in the AI systems they develop, deploy, or use as standalone or integrated
+components.
+Tracking emergent risks: Organizations’ risk management efforts will be enhanced by
+identifying and tracking emergent risks and considering techniques for measuring them.
+Page 5

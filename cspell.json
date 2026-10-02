@@ -20,19 +20,28 @@
     "normalise",
     "normalised",
     "Normalises",
+    "organisation",
+    "organisations",
     "Pandoc",
     "pasteinto",
+    "PDFium",
     "Prism",
     "Quill",
     "recognise",
     "rowspan",
     "strikethrough",
+    "summarises",
     "Turndown",
+    "twocol",
+    "unpunctuated",
     "vitest"
   ],
   "ignorePaths": [
     "node_modules/**",
     "package-lock.json",
     "js/vendor/**"
+  ],
+  "ignoreRegExpList": [
+    "[\\uFB00-\\uFB06]\\w*"
   ]
 }

@@ -9,7 +9,7 @@
     plain: { noun: 'plain text', hint: 'LinkedIn, X, text messages and forms' },
   };
   const STORAGE_KEY = 'paste-to.output';
-  const APP_SOURCES = ['gdocs', 'notion', 'word', 'gmail', 'airtable'];
+  const APP_SOURCES = ['gdocs', 'notion', 'word', 'gmail', 'airtable', 'pdf'];
 
   const output = document.getElementById('output');
   const flash = document.getElementById('copyFlash');
