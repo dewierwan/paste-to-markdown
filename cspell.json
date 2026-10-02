@@ -39,7 +39,8 @@
   "ignorePaths": [
     "node_modules/**",
     "package-lock.json",
-    "js/vendor/**"
+    "js/vendor/**",
+    "tests/fixtures/pdf/**"
   ],
   "ignoreRegExpList": [
     "[\\uFB00-\\uFB06]\\w*"
