@@ -203,10 +203,6 @@ body {
   text-underline-offset: 2px;
 }
 
-.page-footer .dot {
-  color: var(--ink-subtle);
-}
-
 /* Responsive — single column on narrow viewports */
 @media (max-width: 720px) {
   .page {
@@ -354,7 +350,6 @@ body {
   .pills-from,
   .pills:not(.pills-from) { grid-template-columns: repeat(3, minmax(max-content, 1fr)); }
   .pill { padding: 6px 8px; }
-  .page-footer .dot { display: none; }
 }
 
 /* On short or narrow screens the header and controls leave too little room for
