@@ -14,10 +14,7 @@
   const track = globalThis.track || (() => {});
 
   const output = document.getElementById('output');
-  const actions = document.getElementById('cardActions');
-  const pasteButton = document.getElementById('pasteButton');
-  const copyButton = document.getElementById('copyButton');
-  const status = document.getElementById('status');
+  const flash = document.getElementById('copyFlash');
   const hint = document.getElementById('outputHint');
   const noun = document.getElementById('outputNoun');
   const sourceHint = document.getElementById('sourceHint');
@@ -29,16 +26,19 @@
   let clip = null; // { html, text, types }
   let detected = null; // { source, read }
   let readAs = null; // detected.read unless the user picks another "From" option
-  let result = null; // the last conversion, for the Copy button
-  let copyTimer;
-  let pasteTimer;
+  let result = null; // the last conversion
+  let copyPending = false; // a phone refused the automatic copy; the next tap copies
+  let flashTimer;
 
-  // How to paste on this device. Phones have no ⌘V and the page has no text
-  // field to long-press, so there the card itself is the way in.
+  // How to paste on this device. Computers use the keyboard. Phones have no ⌘V
+  // and the page has no text field to long-press, so there the card is a button.
   const touch = matchMedia('(hover: none) and (pointer: coarse)').matches;
   const mac = /mac|iphone|ipad/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '');
-  const keys = mac ? '⌘V' : 'Ctrl+V';
-  showEmpty(touch ? 'Tap to paste' : `Paste anywhere · ${keys}`);
+  output.dataset.placeholder = touch ? 'Tap to paste' : `Paste anywhere · ${mac ? '⌘V' : 'Ctrl+V'}`;
+  if (touch) {
+    output.setAttribute('role', 'button');
+    output.setAttribute('aria-label', 'Paste');
+  }
 
   selectOutput(current, false);
 
@@ -72,20 +72,11 @@
     takeClip({ html, text, types: Array.from(data.types || []) }, output.isContentEditable ? 'menu' : 'keys');
   });
 
-  // The empty card, and the Paste button once there is a result, read the clipboard directly.
+  // Phones only: a tap pastes, or copies if the automatic copy was refused.
   output.addEventListener('click', () => {
-    if (output.getAttribute('role') === 'button') pasteFromClipboard('card');
-  });
-  output.addEventListener('keydown', (event) => {
-    if (output.getAttribute('role') !== 'button' || (event.key !== 'Enter' && event.key !== ' ')) return;
-    event.preventDefault();
-    pasteFromClipboard('card');
-  });
-  pasteButton.addEventListener('click', () => pasteFromClipboard('button'));
-  copyButton.addEventListener('click', () => {
-    if (!result) return;
-    copyResult(result);
-    track('copy', { format: current });
+    if (!touch || output.isContentEditable) return;
+    if (copyPending && result) copyResult(result);
+    else pasteFromClipboard();
   });
 
   function takeClip(data, via) {
@@ -97,31 +88,28 @@
     // Name the app when we recognise one; otherwise the selected pill says it all.
     const app = APP_SOURCES.includes(detected.source) ? SOURCE_NAMES[detected.source] : null;
     sourceHint.textContent = app ? `Detected ${app}` : 'Detected automatically';
-    output.removeAttribute('role');
-    output.removeAttribute('aria-label');
     output.removeAttribute('contenteditable');
     output.removeAttribute('inputmode');
-    actions.hidden = false;
     showReadAs();
     render(true);
     track('paste', { source: detected.source, format: current, via });
   }
 
-  async function pasteFromClipboard(via) {
+  async function pasteFromClipboard() {
     let data;
     try {
       data = await readClipboard();
     } catch (err) {
       // Not supported, or the person said no to the browser's prompt.
-      track('paste_blocked', { via });
+      track('paste_blocked');
       pasteBlocked();
       return;
     }
     if (!data.html && !data.text) {
-      say('Nothing to paste');
+      showFlash('Nothing to paste', true);
       return;
     }
-    takeClip(data, via);
+    takeClip(data, 'tap');
   }
 
   // Asks for the original HTML: Chrome otherwise strips the attributes that
@@ -142,49 +130,18 @@
     return data;
   }
 
-  // Without clipboard access, a phone can still paste from the long-press menu
-  // into an editable card (inputmode="none" keeps the keyboard away); a computer
-  // still has the keyboard shortcut.
+  // Without clipboard access a phone can still paste from the long-press menu,
+  // into the card made editable (inputmode="none" keeps the keyboard away).
   function pasteBlocked() {
-    if (touch) {
-      reset();
-      output.setAttribute('contenteditable', 'true');
-      output.setAttribute('inputmode', 'none');
-      showEmpty('Press and hold here, then tap Paste');
-      output.focus();
-    } else if (!clip) {
-      showEmpty(`Press ${keys} to paste`);
-    } else {
-      say(`Press ${keys}`);
-    }
-  }
-
-  // Back to the empty card, for a fresh paste on a phone.
-  function reset() {
     clip = null;
     result = null;
-    actions.hidden = true;
+    copyPending = false;
     output.className = 'output-content';
     output.textContent = '';
-  }
-
-  function showEmpty(message) {
-    output.dataset.placeholder = message;
-    output.setAttribute('role', 'button');
-    output.setAttribute('aria-label', message);
-    output.tabIndex = 0;
-  }
-
-  // A short note on the Paste button, for when there is a result on screen.
-  function say(message) {
-    status.textContent = message;
-    if (actions.hidden) {
-      output.dataset.placeholder = message;
-      return;
-    }
-    pasteButton.textContent = message;
-    clearTimeout(pasteTimer);
-    pasteTimer = setTimeout(() => { pasteButton.textContent = 'Paste'; }, 3000);
+    output.dataset.placeholder = 'Press and hold here, then tap Paste';
+    output.setAttribute('contenteditable', 'true');
+    output.setAttribute('inputmode', 'none');
+    output.focus();
   }
 
   function showReadAs() {
@@ -234,28 +191,25 @@
       } else {
         await navigator.clipboard.writeText(result.text);
       }
-      showCopied(true);
+      copyPending = false;
+      showFlash('Copied', false);
     } catch (err) {
       console.error('Could not copy:', err);
       track('copy_failed', { format: current });
-      showCopied(false);
+      // Phones (Safari especially) can refuse to copy after reading the
+      // clipboard; a fresh tap is allowed to, so ask for one.
+      copyPending = touch;
+      if (touch) showFlash('Tap to copy', false);
+      else showFlash('Copy failed', true);
     }
   }
 
-  // "Copied" for a moment after it works. When it fails (Safari refuses to
-  // copy after reading the clipboard), highlight Copy so one tap finishes it.
-  function showCopied(ok) {
-    clearTimeout(copyTimer);
-    copyButton.classList.toggle('is-done', ok);
-    copyButton.classList.toggle('is-attention', !ok);
-    copyButton.textContent = ok ? 'Copied' : 'Copy';
-    status.textContent = ok ? 'Copied' : `Not copied yet. ${touch ? 'Tap' : 'Click'} Copy.`;
-    if (ok) {
-      copyTimer = setTimeout(() => {
-        copyButton.classList.remove('is-done');
-        copyButton.textContent = 'Copy';
-      }, 2000);
-    }
+  function showFlash(message, isError) {
+    flash.textContent = message;
+    flash.classList.toggle('is-error', isError);
+    flash.style.opacity = '1';
+    clearTimeout(flashTimer);
+    if (!copyPending) flashTimer = setTimeout(() => { flash.style.opacity = '0'; }, 3000);
   }
 
   // A remembered output is a convenience; storage can be unavailable.

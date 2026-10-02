@@ -16,7 +16,7 @@ Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion'
 
 ## Features
 
-- Paste anywhere on the page; the result is auto-copied. Switching output re-copies the same paste.
+- Paste anywhere on the page (on a phone, tap the card); the result is auto-copied. Switching output re-copies the same paste.
 - Detects the source (Google Docs, Notion, Word, Gmail, Airtable, PDF, Markdown, plain text) and lets you override how it's read.
 - Headings, bold, italic, strikethrough, links, nested bullet and numbered lists, checkboxes, code, quotes and tables.
 - Repairs text copied from PDFs (a page or the whole document): rejoins the hard line breaks into paragraphs, removes line-break hyphens (keeping real ones like "evidence-based"), drops page numbers and the headers and footers repeated on every page, tidies contents pages and fixes ligatures, drop caps and Word bullets. Copies from Preview also keep headings (worked out from font sizes) and any bold Preview marks. Chrome's PDF viewer copies plain text only, so its copies come through without headings.
@@ -33,7 +33,7 @@ To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpac
 
 100% client-side. Nothing you paste leaves your browser.
 
-On pasteinto.com and in the Chrome extension, `js/analytics.js` sends anonymous usage counts to [Umami Cloud](https://umami.is/) with no cookies: pageviews, plus events naming the detected source app, the output format and how you pasted (keyboard, Paste button or long-press). The Chrome extension sends the same counts, reported as the page `/extension`. It never sends pasted content.
+On pasteinto.com and in the Chrome extension, `js/analytics.js` sends anonymous usage counts to [Umami Cloud](https://umami.is/) with no cookies: pageviews, plus events naming the detected source app, the output format and how you pasted (keyboard, tap or long-press). The Chrome extension sends the same counts, reported as the page `/extension`. It never sends pasted content.
 
 ## Run locally
 
