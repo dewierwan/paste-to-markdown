@@ -4,7 +4,7 @@
   const OUTPUTS = {
     markdown: { noun: 'markdown', hint: 'Claude, ChatGPT, GitHub, Obsidian and Notion' },
     email: { noun: 'email and Slack text', hint: 'Gmail, Outlook and Slack' },
-    rich: { noun: 'rich text', hint: 'Google Docs and Airtable' },
+    rich: { noun: 'rich text', hint: 'Google Docs, Notion and Airtable' },
     whatsapp: { noun: 'WhatsApp text', hint: 'WhatsApp and Signal' },
     plain: { noun: 'plain text', hint: 'LinkedIn, text messages and forms' },
   };
