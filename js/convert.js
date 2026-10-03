@@ -130,7 +130,7 @@
     return (text || '')
       .replace(/\r\n/g, '\n')
       .split('\n')
-      .map((line) => (line ? `<div>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : '<div><br></div>'))
+      .map((line) => (line ? `<div>${escapeHtml(line)}</div>` : '<div><br></div>'))
       .join('');
   }
 

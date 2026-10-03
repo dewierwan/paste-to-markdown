@@ -400,10 +400,6 @@
     return wraps[Math.floor(wraps.length / 2)] >= 30;
   }
 
-  function escapeHtml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
   root.pdfToHtml = pdfToHtml;
   root.looksLikePdf = looksLikePdf;
   root.keepHyphenForTest = (l, r, text) => keepHyphen(l, r, wordCounts(normalise(text)));

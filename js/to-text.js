@@ -72,17 +72,11 @@
       return !href || inner.trim() === href || inner.trim() === bare ? inner : `${inner} (${href})`;
     }
     if (!ctx.wa) return inner;
-    if (tag === 'B') return wrap('*', inner);
-    if (tag === 'I') return wrap('_', inner);
-    if (tag === 'S') return wrap('~', inner);
-    if (tag === 'FONT' && node.getAttribute('face') === 'monospace') return inner.includes('\n') ? `\`\`\`${inner}\`\`\`` : wrap('`', inner);
+    if (tag === 'B') return wrapMarkers('*', inner);
+    if (tag === 'I') return wrapMarkers('_', inner);
+    if (tag === 'S') return wrapMarkers('~', inner);
+    if (tag === 'FONT' && node.getAttribute('face') === 'monospace') return inner.includes('\n') ? `\`\`\`${inner}\`\`\`` : wrapMarkers('`', inner);
     return inner;
-  }
-
-  // WhatsApp markers must touch the text: "*bold* " works, "*bold *" does not.
-  function wrap(marker, text) {
-    const match = text.match(/^(\s*)([\s\S]*?)(\s*)$/);
-    return match[2] ? `${match[1]}${marker}${match[2]}${marker}${match[3]}` : text;
   }
 
   root.toText = toText;

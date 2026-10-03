@@ -27,6 +27,7 @@ const PAGE = `<!DOCTYPE html>
 <button id="save" disabled>Save</button></p>
 <pre id="status">Waiting for a paste…</pre>
 <script src="/js/vendor/marked.umd.js"></script>
+<script src="/js/util.js"></script>
 <script src="/js/sources.js"></script>
 <script src="/js/from-pdf.js"></script>
 <script src="/js/convert.js"></script>

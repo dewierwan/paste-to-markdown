@@ -365,13 +365,5 @@
     while (isEmptyLine(body.lastChild)) body.lastChild.remove();
   }
 
-  function escapeHtml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function escapeAttr(s) {
-    return escapeHtml(s).replace(/"/g, '&quot;');
-  }
-
   root.cleanHtml = cleanHtml;
 })(globalThis);

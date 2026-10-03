@@ -51,13 +51,6 @@
     return text.replace(/([\\`*_[\]~])/g, '\\$1');
   }
 
-  // Markers must touch the text: "**bold** " is bold, "**bold **" is not.
-  // Move edge whitespace outside the markers; skip whitespace-only runs.
-  function wrapMarkdown(marker, text) {
-    const match = text.match(/^(\s*)([\s\S]*?)(\s*)$/);
-    return match[2] ? match[1] + marker + match[2] + marker + match[3] : text;
-  }
-
   function convertNode(node, indent) {
     if (node.nodeType === 3) return escapeMarkdown(node.textContent);
     if (node.nodeType !== 1) return '';
@@ -67,11 +60,11 @@
       case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
         return `${'#'.repeat(Number(tag[1]))} ${inner()}\n\n`;
       case 'b':
-        return wrapMarkdown('**', inner());
+        return wrapMarkers('**', inner());
       case 'i':
-        return wrapMarkdown('*', inner());
+        return wrapMarkers('*', inner());
       case 's':
-        return wrapMarkdown('~~', inner());
+        return wrapMarkers('~~', inner());
       case 'mark': case 'sub': case 'sup':
         return `<${tag}>${inner()}</${tag}>`;
       case 'code':
