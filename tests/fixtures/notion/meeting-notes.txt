@@ -1,0 +1,12 @@
+Weekly sync
+Agenda for Thursday, with notes and a roadmap link.
+Hiring update
+Two offers out
+Course launch
+Review budget
+Confirm venue
+Send invites
+Book room
+Ship small, ship often.
+const x = 1;
+Owner: @dewi

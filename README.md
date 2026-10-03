@@ -79,7 +79,7 @@ The page title lists features, but people search for the problem, especially pas
 
 ## Contributing
 
-Real-world fixtures are the most useful contribution: put a clipboard HTML sample in `tests/fixtures/<source>/<scenario>.html` with the expected Markdown in `<scenario>.expected.md`. For PDFs, add the copied text to `tests/fixtures/pdf/` (and the clipboard HTML, if the viewer wrote any) with a test in `tests/pdf.test.js`.
+Real-world fixtures are the most useful contribution. Run `npm run capture`, paste from the app, save, then run `npm run test:update` and check the expected outputs it writes. [`tests/fixtures/README.md`](tests/fixtures/README.md) has the details. For PDFs, add the copied text to `tests/fixtures/pdf/` (and the clipboard HTML, if the viewer wrote any) with a test in `tests/pdf.test.js`.
 
 ```sh
 npm install

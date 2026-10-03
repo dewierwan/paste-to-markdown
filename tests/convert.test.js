@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync, readdirSync, existsSync } from 'fs';
-import { resolve, dirname, join } from 'path';
-import { fileURLToPath } from 'url';
 import { loadSite } from './load.js';
-
-const fixturesDir = resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
 let convertToMarkdown;
 let stripImages;
@@ -163,39 +158,6 @@ describe('links', () => {
   it('basic link', () => {
     expect(md('<a href="https://x.com">x</a>')).toBe('[x](https://x.com)');
   });
-});
-
-// Real-world fixture corpus. Drop pairs of {scenario}.html and {scenario}.expected.md
-// into tests/fixtures/<source>/ to grow regression coverage. Runs the full paste
-// pipeline (HTML read as rich text, written as Markdown).
-describe('fixtures', () => {
-  if (!existsSync(fixturesDir)) {
-    it.skip('no fixtures directory yet', () => {});
-    return;
-  }
-  const sources = readdirSync(fixturesDir, { withFileTypes: true })
-    .filter(d => d.isDirectory())
-    .map(d => d.name);
-  if (sources.length === 0) {
-    it.skip('no source fixtures yet', () => {});
-    return;
-  }
-  for (const source of sources) {
-    const sourceDir = join(fixturesDir, source);
-    const cases = readdirSync(sourceDir)
-      .filter(f => f.endsWith('.html'))
-      .map(f => f.replace(/\.html$/, ''));
-    for (const name of cases) {
-      const htmlPath = join(sourceDir, name + '.html');
-      const expectedPath = join(sourceDir, name + '.expected.md');
-      if (!existsSync(expectedPath)) continue;
-      it(`${source}/${name}`, () => {
-        const input = readFileSync(htmlPath, 'utf-8');
-        const expected = readFileSync(expectedPath, 'utf-8').replace(/\n+$/, '');
-        expect(convertClip({ html: input, text: '' }, 'rich', 'markdown').text).toBe(expected);
-      });
-    }
-  }
 });
 
 describe('stripImages', () => {

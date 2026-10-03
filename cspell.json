@@ -45,7 +45,10 @@
     "node_modules/**",
     "package-lock.json",
     "js/vendor/**",
-    "tests/fixtures/pdf/**"
+    "tests/fixtures/**/*.html",
+    "tests/fixtures/**/*.txt",
+    "tests/fixtures/**/*.md",
+    "tests/fixtures/**/*.types"
   ],
   "ignoreRegExpList": [
     "[\\uFB00-\\uFB06]\\w*"
