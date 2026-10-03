@@ -43,15 +43,40 @@
   }
 
   function convertNodes(nodes, fmt, mode, opts) {
+    if (mode === 'block') return wrapLooseText(Array.from(nodes, (child) => convertNode(child, fmt, mode, opts)), opts);
     let html = '';
     let prevWasBlock = false;
     for (const child of nodes) {
       const isBlock = child.nodeType === 1 && BLOCK_TAGS.has(child.tagName);
       // Inside a list item or table cell, separate paragraphs with line breaks.
-      if (mode === 'inline' && isBlock && prevWasBlock) html += '<br>';
+      if (isBlock && prevWasBlock) html += '<br>';
       html += convertNode(child, fmt, mode, opts);
       if (child.nodeType === 1 || child.textContent.trim()) prevWasBlock = isBlock;
     }
+    return html;
+  }
+
+  // Text loose among blocks is a line of its own: Gmail writes
+  // <div>Hi Sam,<div><br></div><div>Thanks…</div></div>. With no blocks around
+  // it (a selection inside one paragraph), it stays inline.
+  function wrapLooseText(parts, opts) {
+    const isBlock = (part) => /^<(div|p|h[1-6]|ul|ol|table|blockquote|pre|hr)[\s>]/.test(part);
+    if (!parts.some(isBlock)) return parts.join('');
+    let html = '';
+    let loose = '';
+    const flush = () => {
+      if (loose.replace(/<br>|&nbsp;|\s/g, '')) html += opts.target === 'rich' ? `<div>${loose}</div>` : `<p>${loose}</p>`;
+      loose = '';
+    };
+    for (const part of parts) {
+      if (isBlock(part)) {
+        flush();
+        html += part;
+      } else {
+        loose += part;
+      }
+    }
+    flush();
     return html;
   }
 
