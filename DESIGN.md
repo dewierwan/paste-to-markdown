@@ -35,6 +35,9 @@ These live in `css/app.css` and match email-drafter's `extension/sidepanel.css`.
 
 ## Icons and brand marks
 
-- Keep the favicon and extension icon monochrome (ink and paper), with at most a small accent. Never a solid blue tile: they are not BlueDot branding.
-- Use one simple, literal symbol per icon. It must still be readable at 16×16 px, so use heavy strokes and generous padding, and check it at real size.
+The icon is a lowercase "p" from iA Writer Mono Bold followed by a text cursor, in paper `#F7F7F7` on an ink `#222222` rounded tile. It reads as "Paste Into" and as text arriving at the cursor. The cursor is slightly thinner than the p's stem so the letter leads.
+
+- `icons/icon.svg` is the source and the site favicon. The PNGs in `icons/` are renders of it: 16, 32 and 48 px full bleed, 128 px with 96 px artwork and transparent padding (the Chrome Web Store's guideline), and a square 180 px `apple-touch-icon.png`.
+- Keep icons monochrome (ink and paper). Never a solid blue tile: they are not BlueDot branding.
+- Use one simple, literal symbol. Check it at 16×16 px in light and dark tab bars before changing it.
 - No gradients, shadows, 3D, texture or extra text.
