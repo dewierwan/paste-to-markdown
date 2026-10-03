@@ -25,6 +25,8 @@ Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion'
 
 ## Chrome extension
 
+Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/paste-into/cafcglpffcdbmioicikgpiobcpfpkcge).
+
 The same files are also a Chrome extension: `manifest.json` opens `index.html` as the toolbar popup. Click the paperclip (or press Alt+Shift+V, which you can change at `chrome://extensions/shortcuts`), paste, and the result is copied.
 
 To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick this folder. `npm run pack:extension` writes the Chrome Web Store upload to `dist/`; bump `version` in `manifest.json` first for each release.
