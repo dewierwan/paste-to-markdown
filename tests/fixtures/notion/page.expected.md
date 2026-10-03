@@ -1,0 +1,21 @@
+## Weekly sync
+
+Agenda for **Thursday**, with *notes* and a [course link](https://bluedot.org/courses).
+
+- Hiring update
+  - Two offers out
+- Course launch
+
+1. Review budget
+2. Confirm venue
+
+- [x] Send invites
+- [ ] Book room
+
+> Ship small, ship often.
+
+```jsx
+const x = 1;
+```
+
+Owner: `ops` team

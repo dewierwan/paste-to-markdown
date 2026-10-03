@@ -126,7 +126,8 @@
   // app marks blank lines (see js/sources.js).
   /** @param {Clip} clip @param {ReadAs} readAs @returns {{ html: string, spacing: Spacing }} */
   function readHtml(clip, readAs) {
-    if (readAs === 'markdown') return { html: marked.parse(clip.text || '', { gfm: true }), spacing: 'tags' };
+    // breaks: a single newline is a line break ("Thanks,⏎Dewi"), as in chat apps.
+    if (readAs === 'markdown') return { html: marked.parse(clip.text || '', { gfm: true, breaks: true }), spacing: 'tags' };
     if (readAs === 'pdf') return { html: pdfToHtml(clip.text, clip.html), spacing: 'tags' };
     if (readAs !== 'rich' || !clip.html) return { html: textToHtml(clip.text), spacing: 'tags' };
     const app = findApp(clip);

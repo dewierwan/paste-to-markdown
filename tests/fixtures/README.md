@@ -19,8 +19,8 @@ PDF fixtures in `pdf/` are plain text instead: `<name>.txt`, plus `<name>-clipbo
 
 ## Adding a fixture
 
-1. Run `npm run capture`. A local page opens.
-2. Copy something in the app you want to test, paste it on that page, give it a name and save. The files land in `tests/fixtures/<folder>/`.
+1. Copy something in the app you want to test.
+2. Run `npm run capture -- <folder>/<name>` (macOS). It saves the clipboard, including the hidden types apps like Notion add, to `tests/fixtures/<folder>/`. Without a name, `npm run capture` opens a local page to paste into instead.
 3. Run `npm run test:update`. It writes the expected files for the new fixture.
 4. Read the expected files. If an output is wrong, fix the code, run `npm run test:update` again, and check the diff.
 
@@ -34,4 +34,8 @@ Real captures are better than hand-written ones, because apps change their clipb
 |---|---|
 | `gdocs/`, `airtable/` | Added with the original test suite |
 | `pdf/` | Real viewer copies (see `tests/pdf.test.js`) |
-| `notion/`, `word/`, `gmail/`, `vscode/`, `claude/` | Hand-built from each app's known clipboard format (October 2026), not yet real captures |
+| `notion/page`, `gmail/compose` | Real captures, 03 Oct 2026: a Notion page in Chrome, and text typed into Gmail's compose box |
+| `gmail/reply` | Hand-built: a received email, with Gmail's `gmail_quote` markup |
+| `word/`, `vscode/`, `claude/` | Hand-built from each app's known clipboard format (October 2026), not yet real captures |
+
+Real captures have already corrected two wrong assumptions: Notion writes to-dos as `[x]` text, not checkboxes, and Gmail's compose box adds no `gmail_` classes, so text copied from it is read as ordinary rich text.
