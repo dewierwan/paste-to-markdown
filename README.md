@@ -29,7 +29,14 @@ Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/
 
 The same files are also a Chrome extension: `manifest.json` opens `index.html` as the toolbar popup. Click the paperclip (or press Alt+Shift+V, which you can change at `chrome://extensions/shortcuts`), paste, and the result is copied.
 
-To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick this folder. `npm run pack:extension` writes the Chrome Web Store upload to `dist/`; bump `version` in `manifest.json` first for each release.
+To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick this folder.
+
+To release a new version:
+
+1. Bump `version` in `manifest.json`.
+2. Run `npm run pack:extension`. It writes the Chrome Web Store upload to `dist/`, and refuses if that version already has a tag.
+3. Upload the zip to the Chrome Web Store.
+4. Tag the release: `git tag v1.2.3 && git push origin v1.2.3`. CI checks the tag matches `manifest.json`, runs the tests and attaches the zip to a GitHub release.
 
 ## Privacy
 
