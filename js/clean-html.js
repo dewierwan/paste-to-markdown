@@ -6,6 +6,9 @@
 //   headings "bold" (email: Gmail, Outlook and Slack have no headings) turns
 //   headings into bold lines; headings "keep" (Docs, Notion, Airtable) keeps
 //   <h1>–<h6> at their original level.
+//   tasks "text" (email, Slack, text outputs) writes task boxes as ☐ and ☑
+//   characters; tasks "inputs" (Docs) keeps <input type="checkbox">, which
+//   Notion turns into real to-dos.
 // target "markdown": semantic tags (<p>, <h1>, <pre>, <input type="checkbox">)
 //   for the Markdown writer.
 //
@@ -53,6 +56,8 @@
       headings: options.headings || 'bold',
       margins: options.spacing === 'margins',
     };
+    // Task boxes as ☐/☑ characters, rather than checkbox inputs.
+    opts.textBoxes = opts.target === 'rich' && options.tasks !== 'inputs';
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const start = {
       b: false,
@@ -129,7 +134,7 @@
     if (tag === 'IMG') return renderImage(node);
     if (tag === 'INPUT') {
       if (node.type !== 'checkbox') return '';
-      if (!rich) return node.checked ? '<input type="checkbox" checked>' : '<input type="checkbox">';
+      if (!opts.textBoxes) return node.checked ? '<input type="checkbox" checked>' : '<input type="checkbox">';
       return node.checked ? `${TICKED_BOX} ` : `${OPEN_BOX} `;
     }
     if (tag === 'PRE') return renderCodeBlock(node, opts);
@@ -280,11 +285,10 @@
   function renderList(listEl, fmt, opts) {
     const items = [];
     collectListItems(listEl, 0, fmt, opts, items);
-    const rich = opts.target === 'rich';
     // Email, Slack and the text outputs have no checklists, and a bullet before
     // the box ("• ☐ Book venue") reads as two markers. A list of only tasks
     // becomes lines that start with the box; nesting becomes indentation.
-    if (rich && items.every((item) => item.task)) {
+    if (opts.textBoxes && items.every((item) => item.task)) {
       const lines = items.map((item) => `<div>${TASK_INDENT.repeat(item.level)}${item.html}</div>`).join('');
       return opts.margins ? lines : `<div data-p data-lines>${lines}</div>`;
     }
@@ -305,7 +309,7 @@
         stack.push(item);
       }
       // In a list that mixes tasks and bullets, the box stands in for the bullet.
-      html += rich && item.task ? '<li style="list-style-type:none">' : '<li>';
+      html += opts.textBoxes && item.task ? '<li style="list-style-type:none">' : '<li>';
       html += item.html;
     }
     while (stack.length) html += `</li></${stack.pop().tag}>`;

@@ -237,6 +237,16 @@ describe('task lists', () => {
     expect(email.text).toBe('☐ todo\n• note');
   });
 
+  it('keeps real checkboxes in Docs, which Notion turns into to-dos', () => {
+    const html = '<ul data-checked="false"><li>todo</li><li class="ql-indent-1">sub</li></ul><ul data-checked="true"><li>done</li></ul>';
+    const docs = w.convertClip({ html, text: '' }, 'rich', 'rich');
+    expect(docs.html).toBe(
+      '<ul style="margin-top:0;margin-bottom:0"><li><input type="checkbox">todo<ul style="margin-top:0;margin-bottom:0"><li><input type="checkbox">sub</li></ul></li><li><input type="checkbox" checked="">done</li></ul>',
+    );
+    // Notion reads a one-line text/plain as inline text, so the lines matter.
+    expect(docs.text).toBe('☐ todo\n    ☐ sub\n☑︎ done');
+  });
+
   it('reads Quill 2 checked and unchecked items', () => {
     const html = '<ol><li data-list="checked">done</li><li data-list="unchecked">todo</li></ol>';
     expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] done\n- [ ] todo');
