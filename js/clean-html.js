@@ -40,6 +40,12 @@
   const LIST_STYLE = ' style="margin-top:0;margin-bottom:0"'; // as on lists Gmail creates
   const QUOTE_STYLE = ' style="margin:0 0 0 0.8ex;border-left:1px solid #ccc;padding-left:1ex"'; // Gmail's quote
   const EMPTY_LINE = '<div><br></div>';
+  // Task boxes in rich and text outputs. U+FE0E asks for the text glyph:
+  // without it Gmail, Slack and phones draw ☑ as a coloured emoji next to a
+  // plain ☐.
+  const TICKED_BOX = '\u2611\uFE0E'; // ☑ plus U+FE0E
+  const OPEN_BOX = '☐';
+  const TASK_INDENT = '&nbsp;'.repeat(4); // per nesting level, as list items indent in text output
 
   function cleanHtml(html, options = {}) {
     const opts = {
@@ -124,7 +130,7 @@
     if (tag === 'INPUT') {
       if (node.type !== 'checkbox') return '';
       if (!rich) return node.checked ? '<input type="checkbox" checked>' : '<input type="checkbox">';
-      return node.checked ? '☑ ' : '☐ ';
+      return node.checked ? `${TICKED_BOX} ` : `${OPEN_BOX} `;
     }
     if (tag === 'PRE') return renderCodeBlock(node, opts);
 
@@ -193,11 +199,15 @@
     }
 
     // Docs (and others) put the real formatting in inline styles; these override tags.
+    // "inherit" keeps the parent's value: Airtable writes
+    // <strong><em style="font-weight: inherit">, which is still bold.
     const st = el.style;
-    if (st.fontWeight) f.b = st.fontWeight === 'bold' || st.fontWeight === 'bolder' || parseInt(st.fontWeight, 10) >= 600;
-    if (st.fontStyle) f.i = st.fontStyle === 'italic' || st.fontStyle === 'oblique';
+    const inherits = (value) => value === 'inherit' || value === 'unset';
+    if (st.fontWeight && !inherits(st.fontWeight))
+      f.b = st.fontWeight === 'bold' || st.fontWeight === 'bolder' || parseInt(st.fontWeight, 10) >= 600;
+    if (st.fontStyle && !inherits(st.fontStyle)) f.i = st.fontStyle === 'italic' || st.fontStyle === 'oblique';
     const deco = st.textDecorationLine || st.textDecoration;
-    if (deco) {
+    if (deco && !inherits(deco)) {
       f.u = deco.includes('underline');
       f.s = deco.includes('line-through');
     }
@@ -270,6 +280,14 @@
   function renderList(listEl, fmt, opts) {
     const items = [];
     collectListItems(listEl, 0, fmt, opts, items);
+    const rich = opts.target === 'rich';
+    // Email, Slack and the text outputs have no checklists, and a bullet before
+    // the box ("• ☐ Book venue") reads as two markers. A list of only tasks
+    // becomes lines that start with the box; nesting becomes indentation.
+    if (rich && items.every((item) => item.task)) {
+      const lines = items.map((item) => `<div>${TASK_INDENT.repeat(item.level)}${item.html}</div>`).join('');
+      return opts.margins ? lines : `<div data-p data-lines>${lines}</div>`;
+    }
     let html = '';
     const stack = [];
     for (const item of items) {
@@ -286,7 +304,9 @@
         html += item.open;
         stack.push(item);
       }
-      html += `<li>${item.html}`;
+      // In a list that mixes tasks and bullets, the box stands in for the bullet.
+      html += rich && item.task ? '<li style="list-style-type:none">' : '<li>';
+      html += item.html;
     }
     while (stack.length) html += `</li></${stack.pop().tag}>`;
     // Mark the outer list as a spaced block (the first open tag).
@@ -304,15 +324,14 @@
         const type = tag === 'ol' && OL_TYPES[child.style.listStyleType];
         const isList = (node) => node.nodeType === 1 && (node.tagName === 'UL' || node.tagName === 'OL');
         const nested = Array.from(child.childNodes).filter(isList);
-        const html = convertNodes(
-          Array.from(child.childNodes).filter((node) => !isList(node)),
-          nextFormat(child, fmt),
-          'inline',
-          opts,
-        );
+        const content = Array.from(child.childNodes).filter((node) => !isList(node));
+        const html = convertNodes(content, nextFormat(child, fmt), 'inline', opts);
         const style = opts.target === 'rich' ? LIST_STYLE : '';
+        const isBox = (node) =>
+          node.nodeType === 1 && (node.matches('input[type="checkbox"]') || !!node.querySelector('input[type="checkbox"]'));
         items.push({
           level: ariaLevel > 0 ? ariaLevel - 1 : depth,
+          task: content.some(isBox),
           tag,
           open: `<${tag}${type ? ` type="${type}"` : ''}${style}>`,
           html: html || '<br>',
@@ -347,6 +366,8 @@
     mergeChildren(doc.body);
     if (opts.target === 'rich') {
       spaceParagraphs(doc.body, opts);
+      // A task list is spaced as one block, then its lines stand on their own.
+      for (const el of doc.body.querySelectorAll('[data-lines]')) el.replaceWith(...el.childNodes);
       for (const el of doc.body.querySelectorAll('[data-p], [data-gap-after], [data-gap-before]')) {
         el.removeAttribute('data-p');
         el.removeAttribute('data-gap-after');

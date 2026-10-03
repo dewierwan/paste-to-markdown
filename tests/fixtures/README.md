@@ -38,4 +38,4 @@ Real captures are better than hand-written ones, because apps change their clipb
 | `gmail/reply` | Hand-built: a received email, with Gmail's `gmail_quote` markup |
 | `word/`, `vscode/`, `claude/` | Hand-built from each app's known clipboard format (October 2026), not yet real captures |
 
-Real captures have already corrected two wrong assumptions: Notion writes to-dos as `[x]` text, not checkboxes, and Gmail's compose box adds no `gmail_` classes, so text copied from it is read as ordinary rich text.
+Real captures have already corrected three wrong assumptions: Notion writes to-dos as `[x]` text, not checkboxes; Gmail's compose box adds no `gmail_` classes, so text copied from it is read as ordinary rich text; and Airtable adds no clipboard types of its own, so its pastes are read as ordinary rich text too (the shared Quill fix still turns its `<ul data-checked>` checklists into tasks).

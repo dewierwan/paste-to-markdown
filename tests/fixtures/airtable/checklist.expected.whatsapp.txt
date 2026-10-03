@@ -1,0 +1,15 @@
+*heading 2*
+
+- bullet point
+    - indenteded
+    - *bold*
+    - *_italics and bold_*
+- another one bites the dust
+
+*heading 1*
+
+☐ checklist
+☐ item
+☐ three
+☐ four
+☐ five

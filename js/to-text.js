@@ -54,7 +54,9 @@
     let n = 1;
     for (const li of listEl.children) {
       if (li.tagName !== 'LI') continue;
-      const marker = listEl.tagName === 'OL' ? `${n++}. ` : ctx.wa ? '- ' : '• ';
+      // A task item in a mixed list has no bullet: its box is the marker.
+      const isTask = li.style.listStyleType === 'none';
+      const marker = isTask ? '' : listEl.tagName === 'OL' ? `${n++}. ` : ctx.wa ? '- ' : '• ';
       let text = '';
       let nested = '';
       for (const child of li.childNodes) {
