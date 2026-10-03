@@ -285,3 +285,20 @@ describe('unescapeOverEscaped', () => {
     expect(unescapeOverEscaped('a \\\\~ b')).toBe('a \\\\~ b');
   });
 });
+
+// Browsers run event handlers in HTML set as innerHTML on an element of the live
+// page, even one never shown (<img src=x onerror=...>). jsdom doesn't run them,
+// so check the cause instead: pasted HTML must only be parsed with DOMParser.
+describe('security', () => {
+  it('never parses pasted HTML into the live page', () => {
+    const window = loadSite();
+    const setter = Object.getOwnPropertyDescriptor(window.Element.prototype, 'innerHTML').set;
+    const live = [];
+    Object.defineProperty(window.Element.prototype, 'innerHTML', {
+      set(value) { if (this.ownerDocument === window.document) live.push(value); setter.call(this, value); },
+    });
+    const html = '<p>hi</p><img src="x" onerror="alert(1)">';
+    for (const output of ['markdown', 'email', 'rich', 'whatsapp', 'plain']) window.convertClip({ html, text: '' }, 'rich', output);
+    expect(live).toEqual([]);
+  });
+});

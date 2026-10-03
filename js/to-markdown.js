@@ -33,11 +33,12 @@ function stripImages(markdown) {
     .replace(/\n{3,}/g, "\n\n");
 }
 
-// Convert the entire HTML content into Markdown.
+// Convert the entire HTML content into Markdown. DOMParser builds an inert
+// document: pasted HTML set as innerHTML on a live element would run its event
+// handlers (<img src=x onerror=...>), even though the element is never shown.
 function convertToMarkdown(htmlContent) {
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = htmlContent;
-  return convertNodeToMarkdown(tempDiv).replace(/\n{3,}/g, '\n\n').trim();
+  const doc = new DOMParser().parseFromString(htmlContent, "text/html");
+  return convertNodeToMarkdown(doc.body).replace(/\n{3,}/g, '\n\n').trim();
 }
 
 // Escape characters that would otherwise be parsed as Markdown formatting.

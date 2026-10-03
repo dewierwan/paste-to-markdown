@@ -28,3 +28,11 @@ it('keeps index.html loadable as an extension page', () => {
   expect(html).not.toMatch(/\son[a-z]+="/);
   expect(html).not.toMatch(/<script[^>]+src="https?:/);
 });
+
+// A Content-Security-Policy is the backstop if pasted HTML ever reaches the page.
+it('sets a Content-Security-Policy that blocks inline scripts', () => {
+  const csp = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/);
+  expect(csp).not.toBeNull();
+  expect(csp[1]).toMatch(/script-src 'self';/);
+  expect(csp[1]).not.toMatch(/script-src[^;]*unsafe-inline/);
+});
