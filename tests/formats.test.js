@@ -73,6 +73,15 @@ describe('Google Docs → Markdown', () => {
   });
 });
 
+describe('inherited inline styles', () => {
+  it('keeps bold when an inner tag says font-weight: inherit (Airtable)', () => {
+    const html =
+      '<p><strong style="font-style: inherit; font-weight: 600"><em style="font-style: italic; font-weight: inherit">both</em></strong></p>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).toBe('<div><b><i>both</i></b></div>');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'whatsapp').text).toBe('*_both_*');
+  });
+});
+
 describe('Notion and web HTML → email', () => {
   it('puts blank lines between paragraphs, headings and lists', () => {
     const html = '<h2>Notes</h2><p>First <strong>bold</strong>.</p><p>Second.</p><ul><li>a</li></ul><p>After</p>';
@@ -209,8 +218,23 @@ describe('Word lists', () => {
 describe('task lists', () => {
   it('keeps Quill checklists in every output', () => {
     const html = '<ul data-checked="true"><li>done</li></ul><ul data-checked="false"><li>todo</li></ul>';
-    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] done\n\n- [ ] todo');
-    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('• ☑ done\n\n• ☐ todo');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] done\n- [ ] todo');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('☑\uFE0E done\n☐ todo');
+  });
+
+  it('starts each task line with its box instead of a bullet', () => {
+    const html = '<ul data-checked="false"><li>Book venue</li><li class="ql-indent-1">Pay deposit</li></ul><p>After</p>';
+    const email = w.convertClip({ html, text: '' }, 'rich', 'email');
+    expect(email.html).toBe('<div>☐ Book venue</div><div>&nbsp;&nbsp;&nbsp;&nbsp;☐ Pay deposit</div><div><br></div><div>After</div>');
+    expect(email.text).toBe('☐ Book venue\n    ☐ Pay deposit\n\nAfter');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'whatsapp').text).toBe('☐ Book venue\n    ☐ Pay deposit\n\nAfter');
+  });
+
+  it('keeps bullets on the ordinary items of a mixed list', () => {
+    const html = '<ol><li data-list="unchecked">todo</li><li data-list="bullet">note</li></ol>';
+    const email = w.convertClip({ html, text: '' }, 'rich', 'email');
+    expect(email.html).toContain('<li style="list-style-type:none">☐ todo</li><li>note</li>');
+    expect(email.text).toBe('☐ todo\n• note');
   });
 
   it('reads Quill 2 checked and unchecked items', () => {
@@ -244,7 +268,7 @@ describe('Notion', () => {
   it('turns to-dos written as text into task items', () => {
     const html = '<ul>\n<li>[x]  Send invites</li>\n<li>[ ]  Book <b>room</b></li>\n</ul>';
     expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] Send invites\n- [ ] Book **room**');
-    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('• ☑ Send invites\n• ☐ Book room');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('☑\uFE0E Send invites\n☐ Book room');
   });
 
   it('reads newlines between tags as spaces, not line breaks', () => {

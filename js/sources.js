@@ -57,6 +57,16 @@
     for (const ul of doc.querySelectorAll('ul[data-checked]')) {
       for (const li of ul.children) if (li.tagName === 'LI') addCheckbox(li, ul.getAttribute('data-checked') === 'true');
     }
+    // Quill 1 starts a new <ul> each time an item is ticked or cleared, so one
+    // checklist arrives as several lists. Join them back into one.
+    for (const ul of Array.from(doc.querySelectorAll('ul[data-checked]'))) {
+      let next = ul.nextSibling;
+      while (next && next.nodeType === 3 && !next.textContent.trim()) next = next.nextSibling;
+      if (next && next.nodeType === 1 && next.matches('ul[data-checked]')) {
+        next.prepend(...ul.childNodes);
+        ul.remove();
+      }
+    }
     for (const span of doc.querySelectorAll('.ql-bold')) span.style.fontWeight = 'bold';
     for (const span of doc.querySelectorAll('.ql-italic')) span.style.fontStyle = 'italic';
   }
