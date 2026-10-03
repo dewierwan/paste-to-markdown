@@ -46,7 +46,9 @@
         if (child.nodeType === 1 && (child.tagName === 'UL' || child.tagName === 'OL')) nested += list(child, ctx, depth + 1);
         else text += inline(child, ctx);
       }
-      out += `${'    '.repeat(depth)}${marker}${text.trim()}\n${nested}`;
+      // Later lines of the item line up under its first.
+      const pad = '    '.repeat(depth);
+      out += `${pad}${marker}${text.trim().replace(/\n/g, `\n${pad}${' '.repeat(marker.length)}`)}\n${nested}`;
     }
     return out;
   }

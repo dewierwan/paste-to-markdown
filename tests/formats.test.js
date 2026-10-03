@@ -127,7 +127,7 @@ describe('Markdown writer fixes', () => {
     expect(w.convertToMarkdown('<ol><li>a<ol><li>b</li></ol></li></ol>')).toBe('1. a\n   1. b');
   });
   it('moves edge spaces outside bold and strikethrough', () => {
-    expect(w.convertToMarkdown('<p><b>Bold </b>x<s> gone</s></p>')).toBe('**Bold** x ~~gone~~');
+    expect(w.convertClip({ html: '<p><b>Bold </b>x<s> gone</s></p>', text: '' }, 'rich', 'markdown').text).toBe('**Bold** x ~~gone~~');
   });
 });
 
@@ -170,5 +170,56 @@ describe('Rich text output keeps headings (Docs, Notion, Airtable)', () => {
 
   it('email still turns headings into bold lines', () => {
     expect(w.convertClip({ html: '', text: '## Plan\n\nText' }, 'markdown', 'email').html).toBe('<div><b>Plan</b></div><div><br></div><div>Text</div>');
+  });
+});
+
+describe('Word lists', () => {
+  const item = (level, list, marker, text) =>
+    `<p class="MsoListParagraph" style="text-indent:-.25in;mso-list:${list} level${level} lfo1"><![if !supportLists]><span><span style="mso-list:Ignore">${marker}<span style="font:7.0pt 'Times New Roman'">&nbsp;&nbsp;</span></span></span><![endif]>${text}<o:p></o:p></p>`;
+
+  it('rebuilds bullet paragraphs as a nested list', () => {
+    const html = `<p class="MsoNormal">Intro</p>${item(1, 'l0', '·', 'One')}${item(2, 'l0', 'o', 'Nested')}${item(1, 'l0', '·', 'Two')}`;
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('Intro\n\n- One\n  - Nested\n- Two');
+  });
+
+  it('reads numbers and letters as numbered lists', () => {
+    const html = `${item(1, 'l1', '1.', 'First')}${item(2, 'l1', 'a.', 'Sub')}${item(1, 'l1', '2.', 'Second')}`;
+    expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).toBe(
+      '<ol style="margin-top:0;margin-bottom:0"><li>First<ol type="a" style="margin-top:0;margin-bottom:0"><li>Sub</li></ol></li><li>Second</li></ol>',
+    );
+  });
+});
+
+describe('task lists', () => {
+  it('keeps Quill checklists in every output', () => {
+    const html = '<ul data-checked="true"><li>done</li></ul><ul data-checked="false"><li>todo</li></ul>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] done\n\n- [ ] todo');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('• ☑ done\n\n• ☐ todo');
+  });
+
+  it('reads Quill 2 checked and unchecked items', () => {
+    const html = '<ol><li data-list="checked">done</li><li data-list="unchecked">todo</li></ol>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] done\n- [ ] todo');
+  });
+});
+
+describe('list items with several paragraphs', () => {
+  it('keeps the paragraphs apart, lined up under the first', () => {
+    const html = '<ul><li><p>one</p><p>two</p></li></ul>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('• one\n  two');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- one\n  two');
+  });
+});
+
+describe('Markdown from rich text uses the same cleaning as the other outputs', () => {
+  it('unwraps Google redirect links', () => {
+    const html = '<div class="gmail_default"><a href="https://www.google.com/url?q=https://bluedot.org/&amp;sa=D">site</a></div>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('[site](https://bluedot.org/)');
+  });
+  it('puts lines written as <div>s on separate lines', () => {
+    expect(w.convertClip({ html: '<div>one</div><div>two</div>', text: '' }, 'rich', 'markdown').text).toBe('one\n\ntwo');
+  });
+  it('drops stylesheets', () => {
+    expect(w.convertClip({ html: '<style>p { color: red }</style><p>text</p>', text: '' }, 'rich', 'markdown').text).toBe('text');
   });
 });

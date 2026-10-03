@@ -46,15 +46,13 @@ open pasteinto/index.html
 
 ## How it works
 
-Every paste is read into HTML (`js/convert.js` detects the source; Markdown is parsed with the vendored [marked](https://github.com/markedjs/marked)), then written out:
+Every paste goes through the same three steps (`js/convert.js`):
 
-- `js/clean-html.js` normalises HTML to a small, predictable subset (the Email & Slack and Docs outputs, and the input to the text writers).
-- `js/from-pdf.js` rebuilds paragraphs and lists from PDF text.
-- `js/to-markdown.js` writes Markdown.
-- `js/to-text.js` writes WhatsApp and plain text.
-- `js/app.js` wires up the page.
+1. **Read** it into HTML. Rich text is used as is, Markdown is parsed with the vendored [marked](https://github.com/markedjs/marked), and `js/from-pdf.js` rebuilds paragraphs and lists from PDF text. `js/sources.js` lists the apps a paste can come from, how to recognise each, and rewrites each app's quirks (Word's list paragraphs, Quill's flat lists) into plain HTML.
+2. **Clean** it: `js/clean-html.js` reduces the HTML to a small, predictable subset. It knows nothing about any particular app.
+3. **Write** the output from that: `js/to-markdown.js` writes Markdown, `js/to-text.js` writes WhatsApp and plain text, and the cleaned HTML itself is the Email & Slack and Docs output.
 
-Adding an input or an output means writing one function, not one per pair.
+`js/app.js` wires up the page. Adding an input or an output means writing one function, not one per pair, and a fix for one app's quirk goes in one place.
 
 ## Roadmap
 
