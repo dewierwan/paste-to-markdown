@@ -197,6 +197,7 @@ body {
 }
 
 /* Footer */
+.extension-only { display: none; }
 .page-footer {
   margin-top: 16px;
   font-size: 12px;
@@ -403,6 +404,7 @@ html.is-extension .controls { margin-bottom: 14px; }
 html.is-extension .card { min-height: 0; flex: 1; }
 html.is-extension .page-footer { margin-top: 12px; }
 html.is-extension .site-only { display: none; }
+html.is-extension .extension-only { display: inline; }
 html.is-extension .control-row { grid-template-columns: 36px minmax(0, 1fr); row-gap: 2px; }
 html.is-extension .control-row .pills { justify-self: start; }
 html.is-extension .control-row .hint { grid-column: 2; padding-left: 16px; }
