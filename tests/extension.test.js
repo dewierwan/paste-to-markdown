@@ -9,7 +9,9 @@ const html = readFileSync(resolve(root, 'index.html'), 'utf-8');
 
 it('packs every file the extension popup needs', () => {
   const files = extensionFiles();
-  expect(files).toEqual(expect.arrayContaining(['manifest.json', 'index.html', 'css/app.css', 'js/app.js', 'fonts/InterVariable.woff2', 'icons/icon-128.png']));
+  expect(files).toEqual(
+    expect.arrayContaining(['manifest.json', 'index.html', 'css/app.css', 'js/app.js', 'fonts/InterVariable.woff2', 'icons/icon-128.png']),
+  );
   expect(files.filter((path) => !existsSync(resolve(root, path)))).toEqual([]);
   expect(files.some((path) => path.startsWith('tests/') || path.startsWith('node_modules/'))).toBe(false);
 });

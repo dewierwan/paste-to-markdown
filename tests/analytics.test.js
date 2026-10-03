@@ -9,7 +9,11 @@ const source = readFileSync(resolve(root, 'js/analytics.js'), 'utf-8').replace(/
 
 // Runs js/analytics.js at a given URL and returns the requests it sent.
 function run(url) {
-  const dom = new JSDOM('<!DOCTYPE html><title>Paste Into</title>', { url, runScripts: 'outside-only', virtualConsole: new VirtualConsole() });
+  const dom = new JSDOM('<!DOCTYPE html><title>Paste Into</title>', {
+    url,
+    runScripts: 'outside-only',
+    virtualConsole: new VirtualConsole(),
+  });
   const sent = [];
   dom.window.fetch = (endpoint, options) => {
     sent.push({ endpoint, headers: options.headers, body: JSON.parse(options.body) });

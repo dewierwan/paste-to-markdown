@@ -240,8 +240,7 @@ describe('unescapeOverEscaped', () => {
   });
 
   it('unescapes \\$, \\&, \\<, \\>', () => {
-    expect(unescapeOverEscaped('\\$60k, M\\&E, \\<$10k, A \\> B'))
-      .toBe('$60k, M&E, <$10k, A > B');
+    expect(unescapeOverEscaped('\\$60k, M\\&E, \\<$10k, A \\> B')).toBe('$60k, M&E, <$10k, A > B');
   });
 
   it('preserves real markdown escapes', () => {
@@ -265,7 +264,10 @@ describe('security', () => {
     const setter = Object.getOwnPropertyDescriptor(window.Element.prototype, 'innerHTML').set;
     const live = [];
     Object.defineProperty(window.Element.prototype, 'innerHTML', {
-      set(value) { if (this.ownerDocument === window.document) live.push(value); setter.call(this, value); },
+      set(value) {
+        if (this.ownerDocument === window.document) live.push(value);
+        setter.call(this, value);
+      },
     });
     const html = '<p>hi</p><img src="x" onerror="alert(1)">';
     for (const output of ['markdown', 'email', 'rich', 'whatsapp', 'plain']) window.convertClip({ html, text: '' }, 'rich', output);

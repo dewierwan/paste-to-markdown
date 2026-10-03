@@ -25,16 +25,18 @@
 
   // Strip image markdown so pasted Google Docs base64 blobs never reach the output.
   function stripImages(markdown) {
-    return markdown
-      // Reference definitions pointing to data: URLs (the massive base64 blob).
-      .replace(/^[ \t]*\[[^\]\n]+\]:[ \t]*<?\s*data:[^\n]*>?[ \t]*$/gim, '')
-      // Inline images: ![alt](url)
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-      // Reference-style images: ![alt][ref]
-      .replace(/!\[[^\]]*\]\[[^\]]*\]/g, '')
-      // Tidy: trim trailing spaces per line, collapse 3+ blank lines to 2.
-      .replace(/[ \t]+$/gm, '')
-      .replace(/\n{3,}/g, '\n\n');
+    return (
+      markdown
+        // Reference definitions pointing to data: URLs (the massive base64 blob).
+        .replace(/^[ \t]*\[[^\]\n]+\]:[ \t]*<?\s*data:[^\n]*>?[ \t]*$/gim, '')
+        // Inline images: ![alt](url)
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+        // Reference-style images: ![alt][ref]
+        .replace(/!\[[^\]]*\]\[[^\]]*\]/g, '')
+        // Tidy: trim trailing spaces per line, collapse 3+ blank lines to 2.
+        .replace(/[ \t]+$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+    );
   }
 
   // DOMParser builds an inert document: pasted HTML set as innerHTML on a live
@@ -42,7 +44,9 @@
   // the element is never shown.
   function convertToMarkdown(html) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    return convertNode(doc.body, 0).replace(/\n{3,}/g, '\n\n').trim();
+    return convertNode(doc.body, 0)
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   }
 
   // Escape characters that would otherwise be parsed as Markdown formatting.
@@ -57,7 +61,12 @@
     const inner = () => convertChildren(node, indent);
     const tag = node.tagName.toLowerCase();
     switch (tag) {
-      case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+      case 'h1':
+      case 'h2':
+      case 'h3':
+      case 'h4':
+      case 'h5':
+      case 'h6':
         return `${'#'.repeat(Number(tag[1]))} ${inner()}\n\n`;
       case 'b':
         return wrapMarkers('**', inner());
@@ -65,15 +74,21 @@
         return wrapMarkers('*', inner());
       case 's':
         return wrapMarkers('~~', inner());
-      case 'mark': case 'sub': case 'sup':
+      case 'mark':
+      case 'sub':
+      case 'sup':
         return `<${tag}>${inner()}</${tag}>`;
       case 'code':
         return `\`${node.textContent}\``;
       case 'pre':
         return `\`\`\`${node.getAttribute('data-language') || ''}\n${node.textContent}\n\`\`\`\n\n`;
       case 'blockquote':
-        return `${inner().split('\n').map((line) => (line.trim() ? `> ${line}` : line)).join('\n')}\n\n`;
-      case 'ul': case 'ol': {
+        return `${inner()
+          .split('\n')
+          .map((line) => (line.trim() ? `> ${line}` : line))
+          .join('\n')}\n\n`;
+      case 'ul':
+      case 'ol': {
         let out = tag === 'ol' ? '\n' : '';
         let n = 1;
         for (const li of node.children) if (li.tagName === 'LI') out += convertListItem(li, indent, tag === 'ol' ? n++ : null);

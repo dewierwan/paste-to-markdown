@@ -16,20 +16,25 @@ const fixturesDir = resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures')
 const OUTPUTS = { markdown: 'md', email: 'email.html', rich: 'docs.html', whatsapp: 'whatsapp.txt', plain: 'plain.txt' };
 
 let w;
-beforeAll(() => { w = loadSite(); });
+beforeAll(() => {
+  w = loadSite();
+});
 
 const read = (path) => (existsSync(path) ? readFileSync(path, 'utf-8') : '');
 
 function cases() {
   const found = [];
-  for (const folder of readdirSync(fixturesDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)) {
+  for (const folder of readdirSync(fixturesDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name)) {
     for (const file of readdirSync(join(fixturesDir, folder)).sort()) {
       const base = join(fixturesDir, folder, file.replace(/\.(html|txt)$/, ''));
       if (/\.(expected|detected)\./.test(file)) continue;
       if (folder === 'pdf' ? file.endsWith('.txt') : file.endsWith('.html')) {
-        const clip = folder === 'pdf'
-          ? { text: read(`${base}.txt`), html: read(base.replace(/\.(preview|chrome)$/, '.$1-clipboard') + '.html'), types: [] }
-          : { html: read(`${base}.html`), text: read(`${base}.txt`), types: read(`${base}.types`).split('\n').filter(Boolean) };
+        const clip =
+          folder === 'pdf'
+            ? { text: read(`${base}.txt`), html: read(base.replace(/\.(preview|chrome)$/, '.$1-clipboard') + '.html'), types: [] }
+            : { html: read(`${base}.html`), text: read(`${base}.txt`), types: read(`${base}.types`).split('\n').filter(Boolean) };
         found.push({ name: `${folder}/${file.replace(/\.(html|txt)$/, '')}`, base, clip });
       }
     }
@@ -39,7 +44,9 @@ function cases() {
 
 describe.each(cases())('$name', ({ base, clip }) => {
   let detected;
-  beforeAll(() => { detected = w.detect(clip); });
+  beforeAll(() => {
+    detected = w.detect(clip);
+  });
 
   it('detects the source', async () => {
     await expect(`${detected.source} (read as ${detected.read})\n`).toMatchFileSnapshot(`${base}.detected.txt`);

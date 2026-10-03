@@ -55,7 +55,8 @@ document.getElementById('save').addEventListener('click', async () => {
 
 function save(body) {
   const { folder, name, html, text, types } = JSON.parse(body);
-  if (!SAFE_NAME.test(folder || '') || !SAFE_NAME.test(name || '')) return [400, 'Folder and name: lowercase letters, numbers, dots and dashes only.'];
+  if (!SAFE_NAME.test(folder || '') || !SAFE_NAME.test(name || ''))
+    return [400, 'Folder and name: lowercase letters, numbers, dots and dashes only.'];
   if (!html) return [400, 'This paste has no HTML. Plain-text pastes are tested in tests/convert.test.js and tests/pdf.test.js.'];
   const dir = join(root, 'tests', 'fixtures', folder);
   const base = join(dir, name);
@@ -71,7 +72,9 @@ function save(body) {
 const server = createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/save') {
     let body = '';
-    req.on('data', (chunk) => { body += chunk; });
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
     req.on('end', () => {
       const [status, message] = save(body);
       res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' }).end(message);

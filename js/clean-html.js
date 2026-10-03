@@ -16,8 +16,23 @@
 (function (root) {
   const SKIP_TAGS = new Set(['STYLE', 'SCRIPT', 'META', 'TITLE', 'HEAD', 'LINK', 'COLGROUP', 'COL']);
   const BLOCK_TAGS = new Set([
-    'P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
-    'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'ASIDE', 'NAV', 'FIGURE', 'FIGCAPTION',
+    'P',
+    'DIV',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'SECTION',
+    'ARTICLE',
+    'HEADER',
+    'FOOTER',
+    'MAIN',
+    'ASIDE',
+    'NAV',
+    'FIGURE',
+    'FIGCAPTION',
   ]);
   const STRUCTURE_TAGS = new Set(['UL', 'OL', 'TABLE', 'HR', 'PRE', 'BLOCKQUOTE', ...BLOCK_TAGS]);
   const MERGEABLE_TAGS = new Set(['B', 'I', 'U', 'S', 'SUB', 'SUP', 'A', 'CODE', 'FONT']);
@@ -43,7 +58,11 @@
   }
 
   function convertNodes(nodes, fmt, mode, opts) {
-    if (mode === 'block') return wrapLooseText(Array.from(nodes, (child) => convertNode(child, fmt, mode, opts)), opts);
+    if (mode === 'block')
+      return wrapLooseText(
+        Array.from(nodes, (child) => convertNode(child, fmt, mode, opts)),
+        opts,
+      );
     let html = '';
     let prevWasBlock = false;
     for (const child of nodes) {
@@ -269,7 +288,12 @@
         const type = tag === 'ol' && OL_TYPES[child.style.listStyleType];
         const isList = (node) => node.nodeType === 1 && (node.tagName === 'UL' || node.tagName === 'OL');
         const nested = Array.from(child.childNodes).filter(isList);
-        const html = convertNodes(Array.from(child.childNodes).filter((node) => !isList(node)), nextFormat(child, fmt), 'inline', opts);
+        const html = convertNodes(
+          Array.from(child.childNodes).filter((node) => !isList(node)),
+          nextFormat(child, fmt),
+          'inline',
+          opts,
+        );
         const style = opts.target === 'rich' ? LIST_STYLE : '';
         items.push({
           level: ariaLevel > 0 ? ariaLevel - 1 : depth,
@@ -322,8 +346,11 @@
     while (child) {
       const next = child.nextSibling;
       if (
-        next && child.nodeType === 1 && next.nodeType === 1 &&
-        MERGEABLE_TAGS.has(child.tagName) && child.tagName === next.tagName &&
+        next &&
+        child.nodeType === 1 &&
+        next.nodeType === 1 &&
+        MERGEABLE_TAGS.has(child.tagName) &&
+        child.tagName === next.tagName &&
         child.getAttribute('href') === next.getAttribute('href') &&
         child.getAttribute('face') === next.getAttribute('face')
       ) {
@@ -346,8 +373,8 @@
     children.forEach((el, i) => {
       const prev = children[i - 1];
       const spaced = prev && el.hasAttribute('data-p') && prev.hasAttribute('data-p');
-      const marginGap = prev && !isEmptyLine(el) && !isEmptyLine(prev) &&
-        (prev.hasAttribute('data-gap-after') || el.hasAttribute('data-gap-before'));
+      const marginGap =
+        prev && !isEmptyLine(el) && !isEmptyLine(prev) && (prev.hasAttribute('data-gap-after') || el.hasAttribute('data-gap-before'));
       if (spaced || marginGap) {
         el.insertAdjacentHTML('beforebegin', EMPTY_LINE);
       }

@@ -6,7 +6,7 @@
 // the plain text. Preview also puts HTML on the clipboard with each line's font
 // size (and sometimes bold), which gives back headings and bold.
 (function (root) {
-  const LIGATURES = { 'ﬀ': 'ff', 'ﬁ': 'fi', 'ﬂ': 'fl', 'ﬃ': 'ffi', 'ﬄ': 'ffl', 'ﬅ': 'st', 'ﬆ': 'st' };
+  const LIGATURES = { ﬀ: 'ff', ﬁ: 'fi', ﬂ: 'fl', ﬃ: 'ffi', ﬄ: 'ffl', ﬅ: 'st', ﬆ: 'st' };
   // PDF viewers mark line-end hyphens in different ways: Chrome (PDFium) writes
   // U+FFFE, Chrome-made PDFs use U+2010, Word and LaTeX a plain "-".
   const HYPHEN = '[-\u2010\uFFFE]';
@@ -24,8 +24,53 @@
   const PAGE_NUMBER = /^(page\s+)?\d{1,4}(\s*(of|\/)\s*\d{1,4})?$/i;
   // Words often joined to the next with a real hyphen ("self-attention").
   // Common second halves of hyphenated compounds ("evidence-based").
-  const COMPOUND_SUFFIXES = new Set(['based', 'wise', 'like', 'free', 'level', 'scale', 'specific', 'related', 'driven', 'aware', 'oriented', 'wide', 'term', 'range', 'making', 'friendly', 'owned', 'led', 'up', 'out', 'off', 'in', 'on', 'down', 'time']);
-  const COMPOUND_PREFIXES = new Set(['self', 'non', 'multi', 'well', 'mid', 'cross', 'half', 'semi', 'anti', 'ex', 'state', 'follow', 'long', 'short', 'high', 'low', 'full', 'part']);
+  const COMPOUND_SUFFIXES = new Set([
+    'based',
+    'wise',
+    'like',
+    'free',
+    'level',
+    'scale',
+    'specific',
+    'related',
+    'driven',
+    'aware',
+    'oriented',
+    'wide',
+    'term',
+    'range',
+    'making',
+    'friendly',
+    'owned',
+    'led',
+    'up',
+    'out',
+    'off',
+    'in',
+    'on',
+    'down',
+    'time',
+  ]);
+  const COMPOUND_PREFIXES = new Set([
+    'self',
+    'non',
+    'multi',
+    'well',
+    'mid',
+    'cross',
+    'half',
+    'semi',
+    'anti',
+    'ex',
+    'state',
+    'follow',
+    'long',
+    'short',
+    'high',
+    'low',
+    'full',
+    'part',
+  ]);
 
   // html: the clipboard's HTML, if any; only Preview's (Cocoa HTML Writer) is used.
   function pdfToHtml(text, html) {
@@ -39,14 +84,20 @@
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (!line) { block = null; continue; }
+      if (!line) {
+        block = null;
+        continue;
+      }
       // A heading line starts its own block; a heading over two lines stays one.
       const level = !line.includes(TOC_END) && format.headings.get(lineKey(line));
       if (level) {
         // A title (level 1) over two lines is one heading. Lower headings often sit
         // together (on a contents page), so a line joins only if it carries on the
         // one above ("Standard Deduction, and" / "Filing Information").
-        const carriesOn = block && block.type === 'h' && block.level === level &&
+        const carriesOn =
+          block &&
+          block.type === 'h' &&
+          block.level === level &&
           (level === 1 || CONTINUES.test(block.lines[block.lines.length - 1]) || /^\p{Ll}/u.test(line));
         if (carriesOn) block.lines.push(line);
         else blocks.push((block = { type: 'h', level, lines: [line], wraps: false }));
@@ -66,7 +117,11 @@
         }
         block.lines[block.lines.length - 1] = joinLines(block.lines[block.lines.length - 1], line, words);
         block.wraps = true;
-      } else if (!block.wraps && block.type === 'p' && ((isShort(lines[i - 1], width) && isShort(line, width)) || line.includes(TOC_END) || width < 25)) {
+      } else if (
+        !block.wraps &&
+        block.type === 'p' &&
+        ((isShort(lines[i - 1], width) && isShort(line, width)) || line.includes(TOC_END) || width < 25)
+      ) {
         // Runs of short lines (addresses, sign-offs, code, contents) stay as separate lines.
         block.lines.push(line);
       } else {
@@ -79,7 +134,11 @@
 
   // Compares a text line with an HTML line despite ligatures and spacing.
   function lineKey(line) {
-    return line.replace(TOC_END, '').replace(/[ﬀﬁﬂﬃﬄﬅﬆ]/g, (c) => LIGATURES[c]).replace(/[\s\u00AD\uFFFE]+/g, ' ').trim();
+    return line
+      .replace(TOC_END, '')
+      .replace(/[ﬀﬁﬂﬃﬄﬅﬆ]/g, (c) => LIGATURES[c])
+      .replace(/[\s\u00AD\uFFFE]+/g, ' ')
+      .trim();
   }
 
   // From Preview's HTML (one <p> per printed line, font sizes in a stylesheet):
@@ -103,7 +162,8 @@
       // The size most of the line is in (a footnote mark is a smaller span).
       const bySize = new Map();
       for (const node of p.childNodes) {
-        const own = node.nodeType === 1 && node.className && sizes[`span.${node.className}`];
+        const cls = node.nodeType === 1 && /** @type {Element} */ (node).className;
+        const own = cls && sizes[`span.${cls}`];
         const size = own || sizes[`p.${p.className}`] || 0;
         bySize.set(size, (bySize.get(size) || 0) + node.textContent.length);
       }
@@ -113,18 +173,27 @@
     }
     if (!lines.length) return none;
     const body = [...chars].sort((a, b) => b[1] - a[1])[0][0];
-    const big = (l) => l && l.size >= body * 1.15 && /\p{L}/u.test(l.text) && l.text.length <= 100 &&
-      l.text.split(/\s+/).length <= 12 && !/[.;]$/.test(l.text) && !LEADER.test(l.text);
+    const big = (l) =>
+      l &&
+      l.size >= body * 1.15 &&
+      /\p{L}/u.test(l.text) &&
+      l.text.length <= 100 &&
+      l.text.split(/\s+/).length <= 12 &&
+      !/[.;]$/.test(l.text) &&
+      !LEADER.test(l.text);
     // A heading starts with a capital or digit, unless it carries on the heading
     // above; one that stops on "to" or "and" needs a heading line after it.
-    const isHeading = (l, i) => big(l) &&
+    const isHeading = (l, i) =>
+      big(l) &&
       (/^[\p{Lu}\d"“‘(]/u.test(l.text) || (big(lines[i - 1]) && lines[i - 1].size === l.size)) &&
       (!CONTINUES.test(l.text) || (big(lines[i + 1]) && lines[i + 1].size === l.size));
     const marked = lines.filter(isHeading);
     const levels = [...new Set(marked.map((l) => l.size))].sort((a, b) => b - a);
     const headings = new Map();
     for (const l of marked) headings.set(l.text, Math.min(levels.indexOf(l.size) + 1, 3));
-    const bold = Array.from(doc.querySelectorAll('b'), (b) => lineKey(b.textContent).replace(new RegExp(`${HYPHEN}$`), '')).filter((t) => t.length > 1);
+    const bold = Array.from(doc.querySelectorAll('b'), (b) => lineKey(b.textContent).replace(new RegExp(`${HYPHEN}$`), '')).filter(
+      (t) => t.length > 1,
+    );
     return { headings, bold };
   }
 
@@ -181,7 +250,10 @@
     // middle of sentences: a short, capitalised line after a full line that stops
     // mid-sentence, before one that carries on in lowercase. Page headers found
     // first are looked past, since section heads often sit under them.
-    const lengths = lines.filter(Boolean).map((l) => l.length).sort((a, b) => a - b);
+    const lengths = lines
+      .filter(Boolean)
+      .map((l) => l.length)
+      .sort((a, b) => a - b);
     const typical = lengths[Math.floor(lengths.length / 2)] || 0;
     const candidates = new Set();
     for (const [k, at] of seen) {
@@ -195,8 +267,13 @@
     };
     const interrupts = (i) => {
       const before = textAround(i, -1);
-      return lines[i].length < typical * 0.6 && /^[\p{Lu}0-9]/u.test(lines[i]) &&
-        before.length >= typical && /[\p{Ll},]$/u.test(before) && /^\p{Ll}/u.test(textAround(i, 1));
+      return (
+        lines[i].length < typical * 0.6 &&
+        /^[\p{Lu}0-9]/u.test(lines[i]) &&
+        before.length >= typical &&
+        /[\p{Ll},]$/u.test(before) &&
+        /^\p{Ll}/u.test(textAround(i, 1))
+      );
     };
     for (const [k, at] of seen) {
       if (!candidates.has(k) && at.length >= 3 && at.filter(interrupts).length >= 2) candidates.add(k);
@@ -239,7 +316,10 @@
     const wrapped = lines.map((l, i) => (l && /^\p{Ll}/u.test(lines[i + 1] || '') ? l.length : 0));
     return lines.map((_, i) => {
       // The median, so one wide table row nearby doesn't count.
-      const near = wrapped.slice(Math.max(0, i - 5), i + 6).filter(Boolean).sort((a, b) => a - b);
+      const near = wrapped
+        .slice(Math.max(0, i - 5), i + 6)
+        .filter(Boolean)
+        .sort((a, b) => a - b);
       return near.length ? Math.min(near[Math.floor(near.length / 2)], width) : width;
     });
   }
@@ -331,7 +411,10 @@
   function render(blocks, bold = []) {
     for (const block of blocks) block.lines = block.lines.map((l) => l.replace(TOC_END, ''));
     markBold(blocks, bold);
-    const esc = (l) => escapeHtml(l).replace(/\u0001/g, '<b>').replace(/\u0002/g, '</b>');
+    const esc = (l) =>
+      escapeHtml(l)
+        .replace(/\u0001/g, '<b>')
+        .replace(/\u0002/g, '</b>');
     let html = '';
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
@@ -374,7 +457,11 @@
           from = 0;
         } else {
           const ahead = blocks.slice(b + 1, b + 4).some((x) => x.lines.some((l) => l.includes(bold[run])));
-          if (!ahead) { run++; li = 0; from = 0; } else break;
+          if (!ahead) {
+            run++;
+            li = 0;
+            from = 0;
+          } else break;
         }
       }
     }

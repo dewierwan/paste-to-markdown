@@ -1,0 +1,7 @@
+js/vendor/
+tests/fixtures/
+dist/
+package-lock.json
+*.md
+*.html
+*.css

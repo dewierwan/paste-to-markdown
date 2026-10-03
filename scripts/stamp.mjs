@@ -12,7 +12,10 @@ const indexPath = resolve(root, 'index.html');
 
 export function stamp(html) {
   return html.replace(/(href|src)="((?:css|js)\/[^"?]+\.(?:css|js))(?:\?v=[0-9a-f]*)?"/g, (_, attr, path) => {
-    const hash = createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex').slice(0, 8);
+    const hash = createHash('sha256')
+      .update(readFileSync(resolve(root, path)))
+      .digest('hex')
+      .slice(0, 8);
     return `${attr}="${path}?v=${hash}"`;
   });
 }
@@ -21,7 +24,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const html = readFileSync(indexPath, 'utf-8');
   const stamped = stamp(html);
   if (process.argv.includes('--check')) {
-    if (stamped !== html) { console.error('index.html asset versions are stale: run npm run stamp'); process.exit(1); }
+    if (stamped !== html) {
+      console.error('index.html asset versions are stale: run npm run stamp');
+      process.exit(1);
+    }
   } else {
     writeFileSync(indexPath, stamped);
   }

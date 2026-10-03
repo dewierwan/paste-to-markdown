@@ -2,7 +2,9 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { loadSite, fixture } from './load.js';
 
 let w;
-beforeAll(() => { w = loadSite(); });
+beforeAll(() => {
+  w = loadSite();
+});
 
 const docs = () => fixture('gdocs/email-draft.html');
 const NOTION_TYPES = ['text/plain', 'text/html', 'text/_notion-blocks-v3-production'];
@@ -11,7 +13,8 @@ describe('detect', () => {
   it('Google Docs', () => expect(w.detect({ html: docs(), text: 'x' })).toEqual({ source: 'gdocs', read: 'rich' }));
   it('Notion, by its clipboard type', () => expect(w.detect({ html: '<p>x</p>', text: 'x', types: NOTION_TYPES }).source).toBe('notion'));
   it('Word', () => expect(w.detect({ html: '<p class="MsoNormal">x</p>', text: 'x' }).source).toBe('word'));
-  it('Markdown text', () => expect(w.detect({ html: '', text: '# Title\n\nSome **bold**' })).toEqual({ source: 'markdown', read: 'markdown' }));
+  it('Markdown text', () =>
+    expect(w.detect({ html: '', text: '# Title\n\nSome **bold**' })).toEqual({ source: 'markdown', read: 'markdown' }));
   it('plain text', () => expect(w.detect({ html: '', text: 'Hello there\nSecond line' })).toEqual({ source: 'text', read: 'text' }));
   it('Markdown from a code editor (coloured HTML, no formatting)', () => {
     const html = '<div style="font-family: Menlo"><span style="color:#569cd6">## Heading</span></div>';
@@ -25,30 +28,34 @@ describe('detect', () => {
 describe('Google Docs → email', () => {
   it('keeps formatting, drops fonts and spacing, rebuilds nested lists', () => {
     const { html } = w.convertClip({ html: docs(), text: '' }, 'rich', 'email');
-    expect(html).toBe([
-      '<div><b>Quick update</b></div>',
-      '<div>Hi Sam, here is a <b>bold</b> point, an <i>italic</i> one, and <a href="https://bluedot.org/">a link</a>. &nbsp;Two spaces.</div>',
-      '<div><br></div>',
-      '<div><b>Bold </b><a href="https://example.com/page?x=1"><b>bold link</b></a><u> underlined</u><s> struck</s></div>',
-      '<div><br></div>',
-      '<ul style="margin-top:0;margin-bottom:0"><li>First bullet<ul style="margin-top:0;margin-bottom:0"><li>Nested <b>bullet</b></li></ul></li><li>Second bullet</li></ul>',
-      '<div><br></div>',
-      '<ol style="margin-top:0;margin-bottom:0"><li>Step one</li><li>Step two<ol type="a" style="margin-top:0;margin-bottom:0"><li>Sub-step</li></ol></li></ol>',
-      '<div><br></div>',
-      '<div>Red highlighted text<sup>2</sup></div>',
-      '<div><br></div>',
-      '<div>Best,</div>',
-      '<div>Dewi</div>',
-    ].join(''));
+    expect(html).toBe(
+      [
+        '<div><b>Quick update</b></div>',
+        '<div>Hi Sam, here is a <b>bold</b> point, an <i>italic</i> one, and <a href="https://bluedot.org/">a link</a>. &nbsp;Two spaces.</div>',
+        '<div><br></div>',
+        '<div><b>Bold </b><a href="https://example.com/page?x=1"><b>bold link</b></a><u> underlined</u><s> struck</s></div>',
+        '<div><br></div>',
+        '<ul style="margin-top:0;margin-bottom:0"><li>First bullet<ul style="margin-top:0;margin-bottom:0"><li>Nested <b>bullet</b></li></ul></li><li>Second bullet</li></ul>',
+        '<div><br></div>',
+        '<ol style="margin-top:0;margin-bottom:0"><li>Step one</li><li>Step two<ol type="a" style="margin-top:0;margin-bottom:0"><li>Sub-step</li></ol></li></ol>',
+        '<div><br></div>',
+        '<div>Red highlighted text<sup>2</sup></div>',
+        '<div><br></div>',
+        '<div>Best,</div>',
+        '<div>Dewi</div>',
+      ].join(''),
+    );
   });
 
   it('a partial selection inside one paragraph stays inline', () => {
-    const html = '<b style="font-weight:normal;" id="docs-internal-guid-x"><span style="font-weight:400;">just </span><span style="font-weight:700;">this</span></b>';
+    const html =
+      '<b style="font-weight:normal;" id="docs-internal-guid-x"><span style="font-weight:400;">just </span><span style="font-weight:700;">this</span></b>';
     expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).toBe('just <b>this</b>');
   });
 
   it('turns "space after paragraph" into a blank line', () => {
-    const p = (t) => `<p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:12pt;"><span style="font-weight:400">${t}</span></p>`;
+    const p = (t) =>
+      `<p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:12pt;"><span style="font-weight:400">${t}</span></p>`;
     const html = `<b style="font-weight:normal" id="docs-internal-guid-y">${p('One')}${p('Two')}</b>`;
     expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).toBe('<div>One</div><div><br></div><div>Two</div>');
   });
@@ -60,7 +67,8 @@ describe('Google Docs → email', () => {
 
 describe('Google Docs → Markdown', () => {
   it('ignores the Docs <b style="font-weight:normal"> wrapper', () => {
-    const html = '<b style="font-weight:normal;" id="docs-internal-guid-x"><p><span style="font-weight:400">plain </span><span style="font-weight:700">bold</span></p></b>';
+    const html =
+      '<b style="font-weight:normal;" id="docs-internal-guid-x"><p><span style="font-weight:400">plain </span><span style="font-weight:700">bold</span></p></b>';
     expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('plain **bold**');
   });
 });
@@ -70,26 +78,28 @@ describe('Notion and web HTML → email', () => {
     const html = '<h2>Notes</h2><p>First <strong>bold</strong>.</p><p>Second.</p><ul><li>a</li></ul><p>After</p>';
     expect(w.convertClip({ html, text: '', types: NOTION_TYPES }, 'rich', 'email').html).toBe(
       '<div><b>Notes</b></div><div><br></div><div>First <b>bold</b>.</div><div><br></div><div>Second.</div><div><br></div>' +
-      '<ul style="margin-top:0;margin-bottom:0"><li>a</li></ul><div><br></div><div>After</div>',
+        '<ul style="margin-top:0;margin-bottom:0"><li>a</li></ul><div><br></div><div>After</div>',
     );
   });
 
   it('collapses runs of empty paragraphs', () => {
-    expect(w.convertClip({ html: '<p>a</p><p>&nbsp;</p><p></p><p>b</p>', text: '' }, 'rich', 'email').html)
-      .toBe('<div>a</div><div><br></div><div>b</div>');
+    expect(w.convertClip({ html: '<p>a</p><p>&nbsp;</p><p></p><p>b</p>', text: '' }, 'rich', 'email').html).toBe(
+      '<div>a</div><div><br></div><div>b</div>',
+    );
   });
 });
 
 describe('Markdown → other outputs', () => {
-  const md = '# Plan\n\nShip **the program** by *15 Nov*. See [doc](https://example.com).\n\n- One\n- Two with `code`\n  - Nested\n\nThanks,\nDewi';
+  const md =
+    '# Plan\n\nShip **the program** by *15 Nov*. See [doc](https://example.com).\n\n- One\n- Two with `code`\n  - Nested\n\nThanks,\nDewi';
 
   it('email', () => {
     expect(w.convertClip({ html: '', text: md }, 'markdown', 'email').html).toBe(
       '<div><b>Plan</b></div><div><br></div>' +
-      '<div>Ship <b>the program</b> by <i>15 Nov</i>. See <a href="https://example.com">doc</a>.</div><div><br></div>' +
-      '<ul style="margin-top:0;margin-bottom:0"><li>One</li><li>Two with <font face="monospace">code</font>' +
-      '<ul style="margin-top:0;margin-bottom:0"><li>Nested</li></ul></li></ul><div><br></div>' +
-      '<div>Thanks,<br>Dewi</div>',
+        '<div>Ship <b>the program</b> by <i>15 Nov</i>. See <a href="https://example.com">doc</a>.</div><div><br></div>' +
+        '<ul style="margin-top:0;margin-bottom:0"><li>One</li><li>Two with <font face="monospace">code</font>' +
+        '<ul style="margin-top:0;margin-bottom:0"><li>Nested</li></ul></li></ul><div><br></div>' +
+        '<div>Thanks,<br>Dewi</div>',
     );
   });
 
@@ -115,7 +125,9 @@ describe('WhatsApp markers', () => {
     expect(w.convertClip({ html: '<p><b>bold </b>text</p>', text: '' }, 'rich', 'whatsapp').text).toBe('*bold* text');
   });
   it('show a link once when its text is the URL', () => {
-    expect(w.convertClip({ html: '<p><a href="https://a.com">https://a.com</a></p>', text: '' }, 'rich', 'whatsapp').text).toBe('https://a.com');
+    expect(w.convertClip({ html: '<p><a href="https://a.com">https://a.com</a></p>', text: '' }, 'rich', 'whatsapp').text).toBe(
+      'https://a.com',
+    );
   });
 });
 
@@ -136,7 +148,9 @@ describe('Quill lists (Airtable rich text)', () => {
 
   it('rebuilds nesting from ql-indent classes in rich text', () => {
     const out = w.convertClip({ html: html(), text: '' }, 'rich', 'email').html;
-    expect(out).toContain('<li>First topic<ul style="margin-top:0;margin-bottom:0"><li>detail one</li><li>detail <b>two</b></li></ul></li>');
+    expect(out).toContain(
+      '<li>First topic<ul style="margin-top:0;margin-bottom:0"><li>detail one</li><li>detail <b>two</b></li></ul></li>',
+    );
     expect(out).toContain('<li>detail three<ul style="margin-top:0;margin-bottom:0"><li>deeper still</li></ul></li>');
   });
 
@@ -169,7 +183,9 @@ describe('Rich text output keeps headings (Docs, Notion, Airtable)', () => {
   });
 
   it('email still turns headings into bold lines', () => {
-    expect(w.convertClip({ html: '', text: '## Plan\n\nText' }, 'markdown', 'email').html).toBe('<div><b>Plan</b></div><div><br></div><div>Text</div>');
+    expect(w.convertClip({ html: '', text: '## Plan\n\nText' }, 'markdown', 'email').html).toBe(
+      '<div><b>Plan</b></div><div><br></div><div>Text</div>',
+    );
   });
 });
 

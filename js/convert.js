@@ -16,6 +16,7 @@
   };
 
   // clip: { html, text, types } from the paste event's clipboardData.
+  /** @param {Clip} clip @returns {{ source: string, read: ReadAs }} */
   function detect(clip) {
     const html = clip.html || '';
     if (html) {
@@ -118,6 +119,7 @@
 
   // Step 1: the paste as HTML, with its app's quirks rewritten, and how that
   // app marks blank lines (see js/sources.js).
+  /** @param {Clip} clip @param {ReadAs} readAs @returns {{ html: string, spacing: Spacing }} */
   function readHtml(clip, readAs) {
     if (readAs === 'markdown') return { html: marked.parse(clip.text || '', { gfm: true }), spacing: 'tags' };
     if (readAs === 'pdf') return { html: pdfToHtml(clip.text, clip.html), spacing: 'tags' };

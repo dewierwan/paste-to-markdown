@@ -13,6 +13,7 @@
 //   "margins": every paragraph is a <p> line, and a blank line is a <p> with
 //              space above or below it, or an empty paragraph (Google Docs)
 (function (root) {
+  /** @type {App[]} */
   const APPS = [
     { id: 'gdocs', name: 'Google Docs', spacing: 'margins', matches: (clip) => /docs-internal-guid/.test(clip.html) },
     { id: 'notion', name: 'Notion', matches: (clip) => clip.types.some((t) => /notion/i.test(t)) },
@@ -124,7 +125,7 @@
       text += span.textContent;
       span.remove();
     }
-    return text.replace(/[\s ]+/g, ' ').trim();
+    return text.replace(/[\s\u00A0]+/g, ' ').trim();
   }
 
   root.APPS = APPS;

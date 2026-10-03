@@ -5,7 +5,10 @@
   function toText(html, style) {
     const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
     const ctx = { wa: style === 'whatsapp' };
-    return blocks(doc.body, ctx).replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
+    return blocks(doc.body, ctx)
+      .replace(/[ \t]+$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   }
 
   function blocks(el, ctx) {
@@ -23,12 +26,24 @@
     }
     if (tag === 'UL' || tag === 'OL') return list(node, ctx, depth);
     if (tag === 'TABLE') {
-      return Array.from(node.rows)
-        .map((row) => Array.from(row.cells).map((c) => inlineChildren(c, ctx).replace(/\n/g, ' ').trim()).join(' | '))
-        .join('\n') + '\n';
+      return (
+        Array.from(node.rows)
+          .map((row) =>
+            Array.from(row.cells)
+              .map((c) => inlineChildren(c, ctx).replace(/\n/g, ' ').trim())
+              .join(' | '),
+          )
+          .join('\n') + '\n'
+      );
     }
     if (tag === 'BLOCKQUOTE') {
-      return blocks(node, ctx).replace(/\n+$/, '').split('\n').map((l) => `> ${l}`).join('\n') + '\n';
+      return (
+        blocks(node, ctx)
+          .replace(/\n+$/, '')
+          .split('\n')
+          .map((l) => `> ${l}`)
+          .join('\n') + '\n'
+      );
     }
     if (tag === 'HR') return '———\n';
     return inline(node, ctx);
@@ -60,7 +75,7 @@
   }
 
   function inline(node, ctx) {
-    if (node.nodeType === 3) return node.textContent.replace(/ /g, ' ');
+    if (node.nodeType === 3) return node.textContent.replace(/\u00A0/g, ' ');
     if (node.nodeType !== 1) return '';
     const tag = node.tagName;
     const inner = inlineChildren(node, ctx);
@@ -75,7 +90,8 @@
     if (tag === 'B') return wrapMarkers('*', inner);
     if (tag === 'I') return wrapMarkers('_', inner);
     if (tag === 'S') return wrapMarkers('~', inner);
-    if (tag === 'FONT' && node.getAttribute('face') === 'monospace') return inner.includes('\n') ? `\`\`\`${inner}\`\`\`` : wrapMarkers('`', inner);
+    if (tag === 'FONT' && node.getAttribute('face') === 'monospace')
+      return inner.includes('\n') ? `\`\`\`${inner}\`\`\`` : wrapMarkers('`', inner);
     return inner;
   }
 

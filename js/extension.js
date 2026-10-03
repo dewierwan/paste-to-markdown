@@ -5,7 +5,7 @@
   if (location.protocol !== 'chrome-extension:') return;
   document.documentElement.classList.add('is-extension');
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('a[href^="http"]').forEach((link) => {
+    document.querySelectorAll('a[href^="http"]').forEach((/** @type {HTMLAnchorElement} */ link) => {
       link.target = '_blank';
       link.rel = 'noopener';
     });

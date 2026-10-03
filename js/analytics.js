@@ -45,7 +45,9 @@
         body: JSON.stringify({ type: 'event', payload }),
       })
         .then((response) => response.json())
-        .then((result) => { if (result && result.cache) cache = result.cache; })
+        .then((result) => {
+          if (result && result.cache) cache = result.cache;
+        })
         .catch(() => {});
     } catch {
       // Analytics must never break the page.
