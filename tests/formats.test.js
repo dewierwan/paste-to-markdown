@@ -239,3 +239,21 @@ describe('Markdown from rich text uses the same cleaning as the other outputs', 
     expect(w.convertClip({ html: '<style>p { color: red }</style><p>text</p>', text: '' }, 'rich', 'markdown').text).toBe('text');
   });
 });
+
+describe('Notion', () => {
+  it('turns to-dos written as text into task items', () => {
+    const html = '<ul>\n<li>[x]  Send invites</li>\n<li>[ ]  Book <b>room</b></li>\n</ul>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] Send invites\n- [ ] Book **room**');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('• ☑ Send invites\n• ☐ Book room');
+  });
+
+  it('reads newlines between tags as spaces, not line breaks', () => {
+    const html = '<ul>\n<li>Hiring update\n<ul>\n<li>Two offers out</li>\n</ul>\n</li>\n</ul>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).not.toContain('<br>');
+  });
+
+  it('keeps newlines in preformatted text', () => {
+    const html = '<div style="white-space: pre">line one\nline two</div><p>after</p>';
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('line one\nline two\nafter');
+  });
+});

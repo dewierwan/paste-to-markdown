@@ -1,6 +1,6 @@
 ## Weekly sync
 
-Agenda for **Thursday**, with *notes* and a [roadmap link](https://www.notion.so/bluedot/Roadmap-1234).
+Agenda for **Thursday**, with *notes* and a [course link](https://bluedot.org/courses).
 
 - Hiring update
   - Two offers out
@@ -14,8 +14,8 @@ Agenda for **Thursday**, with *notes* and a [roadmap link](https://www.notion.so
 
 > Ship small, ship often.
 
-```javascript
+```jsx
 const x = 1;
 ```
 
-Owner: `@dewi`
+Owner: `ops` team

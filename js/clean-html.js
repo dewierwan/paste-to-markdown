@@ -48,7 +48,19 @@
       margins: options.spacing === 'margins',
     };
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    const start = { b: false, i: false, u: false, s: false, sup: false, sub: false, code: false, mark: false, heading: false, href: null };
+    const start = {
+      b: false,
+      i: false,
+      u: false,
+      s: false,
+      sup: false,
+      sub: false,
+      code: false,
+      mark: false,
+      heading: false,
+      pre: false,
+      href: null,
+    };
     const out = convertChildren(doc.body, start, 'block', opts);
     return finish(out, opts);
   }
@@ -189,6 +201,7 @@
       f.u = deco.includes('underline');
       f.s = deco.includes('line-through');
     }
+    if (st.whiteSpace) f.pre = st.whiteSpace.startsWith('pre') || st.whiteSpace === 'break-spaces';
     if (st.verticalAlign) {
       f.sup = st.verticalAlign === 'super';
       f.sub = st.verticalAlign === 'sub';
@@ -214,7 +227,10 @@
     let t = escapeHtml(text)
       .replace(/\t/g, '    ')
       .replace(/ {2}/g, '  ') // Docs keeps runs of spaces; HTML would collapse them.
-      .replace(/\r?\n/g, '<br>');
+      // A newline is a line break only in preformatted text (VS Code writes
+      // white-space: pre); elsewhere it is a space, as a browser shows it.
+      // Notion puts newlines between its tags: <li>Hiring update\n<ul>.
+      .replace(/\r?\n/g, fmt.pre ? '<br>' : ' ');
     if (!t) return '';
     const rich = opts.target === 'rich';
     if (fmt.code) t = rich ? `<font face="monospace">${t}</font>` : `<code>${t}</code>`;

@@ -28,7 +28,7 @@ interface CleanOptions {
 }
 
 // js/vendor/marked.umd.js
-declare var marked: { parse(markdown: string, options?: { gfm?: boolean }): string };
+declare var marked: { parse(markdown: string, options?: { gfm?: boolean; breaks?: boolean }): string };
 
 // js/util.js
 declare function escapeHtml(s: string): string;

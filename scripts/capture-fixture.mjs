@@ -1,12 +1,12 @@
-// Saves a real paste as a test fixture. Opens a local page; copy something in
-// the app you want to test, paste it there, name it, and it writes
-// tests/fixtures/<folder>/<name>.html, .txt and (if the app adds its own
-// clipboard types) .types. Then run `npm run test:update` and review the
-// expected outputs it writes next to the fixture.
-// Usage: npm run capture
+// Saves a real paste as a test fixture: tests/fixtures/<folder>/<name>.html,
+// .txt and (if the app adds its own clipboard types) .types. Then run
+// `npm run test:update` and review the expected outputs it writes.
+// Usage:
+//   npm run capture                      opens a local page to paste into
+//   npm run capture -- <folder>/<name>   saves what's on the clipboard now (macOS)
 import { createServer } from 'http';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { execFile } from 'child_process';
+import { execFile, execFileSync } from 'child_process';
 import { resolve, dirname, join, extname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -67,6 +67,48 @@ function save(body) {
   const ownTypes = (types || []).filter((t) => !STANDARD_TYPES.has(t));
   if (ownTypes.length) writeFileSync(`${base}.types`, `${types.join('\n')}\n`);
   return [200, `Saved tests/fixtures/${folder}/${name}.html. Next: npm run test:update, then review the expected files it writes.`];
+}
+
+// The clipboard as a browser's paste event would see it, read with macOS's
+// NSPasteboard. Chrome keeps the custom types a page set (Notion's
+// text/_notion-blocks-v3-production) in one binary "web custom data" entry.
+function readMacClipboard() {
+  const script = `ObjC.import('AppKit');
+    const pb = $.NSPasteboard.generalPasteboard;
+    const str = (t) => { const s = pb.stringForType(t); return s.isNil() ? '' : ObjC.unwrap(s); };
+    const custom = pb.dataForType('org.chromium.web-custom-data');
+    JSON.stringify({ html: str('public.html'), text: str('public.utf8-plain-text'),
+      custom: custom.isNil() ? '' : ObjC.unwrap(custom.base64EncodedStringWithOptions(0)) });`;
+  const { html, text, custom } = JSON.parse(execFileSync('osascript', ['-l', 'JavaScript', '-e', script], { encoding: 'utf-8' }));
+  const types = [...(text ? ['text/plain'] : []), ...(html ? ['text/html'] : []), ...customTypes(Buffer.from(custom, 'base64'))];
+  return { html, text, types };
+}
+
+// Chromium pickle: uint32 payload size, uint32 count, then count pairs of
+// UTF-16 strings (uint32 length in characters, data padded to 4 bytes).
+function customTypes(buf) {
+  if (buf.length < 8) return [];
+  const types = [];
+  let at = 8;
+  const readString = () => {
+    const length = buf.readUInt32LE(at);
+    const value = buf.toString('utf16le', at + 4, at + 4 + length * 2);
+    at += 4 + Math.ceil((length * 2) / 4) * 4;
+    return value;
+  };
+  for (let i = buf.readUInt32LE(4); i > 0; i--) {
+    types.push(readString());
+    readString(); // the data
+  }
+  return types;
+}
+
+const target = process.argv[2];
+if (target) {
+  const [folder, name] = target.split('/');
+  const [, message] = save(JSON.stringify({ ...readMacClipboard(), folder, name }));
+  console.log(message);
+  process.exit(0);
 }
 
 const server = createServer((req, res) => {

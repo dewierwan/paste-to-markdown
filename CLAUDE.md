@@ -10,7 +10,7 @@ Paste anything, pick where it's going, and the result is copied. The site at pas
 - **Type check:** `npm run typecheck` (tsc over JSDoc; no compiling).
 - **Lint and format:** `npm run lint`, `npm run format` (`npm run format:check` in CI).
 - **Spelling and HTML:** `npm run lint:spell`, `npm run lint:html`.
-- **Save a real paste as a fixture:** `npm run capture`.
+- **Save a real paste as a fixture:** copy it, then `npm run capture -- <folder>/<name>` (macOS; `npm run capture` alone opens a page to paste into).
 - **Pack the extension:** `npm run pack:extension`.
 
 CI runs format check, lint, type check, spelling, HTML validation and tests on every push and pull request.

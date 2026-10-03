@@ -23,7 +23,7 @@
   ];
 
   // Fixes for markup that many apps share, run on every rich paste.
-  const SHARED_FIXES = [fixQuill];
+  const SHARED_FIXES = [fixQuill, fixTextTasks];
 
   // clip: { html, text, types }. Returns the app the HTML came from, or null.
   function findApp(clip) {
@@ -59,6 +59,21 @@
     }
     for (const span of doc.querySelectorAll('.ql-bold')) span.style.fontWeight = 'bold';
     for (const span of doc.querySelectorAll('.ql-italic')) span.style.fontStyle = 'italic';
+  }
+
+  // Notion writes to-dos as text: <li>[x]  Send invites</li>. Shared rather
+  // than Notion-only, since a paste read through a phone's clipboard can lose
+  // the clipboard types that identify Notion.
+  function fixTextTasks(doc) {
+    for (const li of doc.querySelectorAll('li')) {
+      const walker = doc.createTreeWalker(li, NodeFilter.SHOW_TEXT);
+      let first = walker.nextNode();
+      while (first && !first.textContent.trim()) first = walker.nextNode();
+      const match = first && first.textContent.match(/^\s*\[([ xX])\]\s+/);
+      if (!match || li.querySelector('input[type="checkbox"]')) continue;
+      first.textContent = first.textContent.slice(match[0].length);
+      addCheckbox(li, match[1] !== ' ');
+    }
   }
 
   function addCheckbox(li, checked) {
