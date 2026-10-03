@@ -2,6 +2,10 @@
 
 Paste anything, pick where it's going, and the result is copied. The site at pasteinto.com and the Chrome extension popup are the same static files. There is no build step.
 
+## Design
+
+Read `DESIGN.md` before any visual change (CSS, layout, page copy, icons, store images). The look follows iA (ia.net): reduction, typography first, quiet surfaces and one sparing accent.
+
 ## Commands
 
 - **Run it:** open `index.html` in a browser.
