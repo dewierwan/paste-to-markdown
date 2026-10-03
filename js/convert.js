@@ -47,15 +47,20 @@
   // all short. TextEdit and Mail write the same HTML, so it also needs a sign of
   // a printed page: more than one font size (a title or heading) or contents
   // leaders ("Introduction ______ 3").
+  const LINE_HTML_MIN_LINES = 5;
+  const LINE_HTML_MIN_P_SHARE = 0.8; // nearly every line is its own <p>
+  const PRINTED_LINE_MAX_CHARS = 150; // a printed line is rarely longer
+  const LONG_LINE_MAX_SHARE = 0.05; // allows the odd long line (a table row, a URL)
+  const MIN_LEADERS = 3;
   function isLineByLineHtml(html, text) {
     if (!/Cocoa HTML Writer/.test(html)) return false;
     const lines = (text || '').split(/\r?\n/).filter((l) => l.trim());
     const paragraphs = (html.match(/<p[ >]/g) || []).length;
-    if (lines.length < 5 || paragraphs < lines.length * 0.8) return false;
-    if (lines.filter((l) => l.length > 150).length > lines.length * 0.05) return false;
+    if (lines.length < LINE_HTML_MIN_LINES || paragraphs < lines.length * LINE_HTML_MIN_P_SHARE) return false;
+    if (lines.filter((l) => l.length > PRINTED_LINE_MAX_CHARS).length > lines.length * LONG_LINE_MAX_SHARE) return false;
     const sizes = new Set(html.match(/font: [\d.]+px/g) || []);
     const leaders = lines.filter((l) => /[_.·…]{4,}\s*\d{0,4}$/.test(l)).length;
-    return sizes.size > 1 || leaders >= 3;
+    return sizes.size > 1 || leaders >= MIN_LEADERS;
   }
 
   function hasFormatting(html) {

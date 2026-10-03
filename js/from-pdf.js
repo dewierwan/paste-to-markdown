@@ -22,55 +22,24 @@
   const CONTINUES = /(\b(and|or|of|the|a|an|for|to|in|on|with|from|by|at)|[,:–—-])$/i;
   const DROP_CAP = /^\p{Lu}$/u; // a large first letter on a line of its own
   const PAGE_NUMBER = /^(page\s+)?\d{1,4}(\s*(of|\/)\s*\d{1,4})?$/i;
+  // Line lengths as a share of the column width. A line that wrapped runs
+  // close to the edge; one that stops well short ended its paragraph.
+  const SHORT_LINE = 0.8; // under this, a line stopped early instead of wrapping
+  const FULL_LINE = 0.9; // a wrapped line, plus the next line's first word, passes this
+  const RUN_ON_LINE = 0.3; // a sentence carrying on in lowercase joins unless its line is under this (a list item)
+  const HEADING_LINE = 0.7; // a heading after a paragraph is shorter than this
+  const WIDE_LINE = 1.2; // a line wider than this spans two columns (a title)
+  const LIST_WIDTH = 25; // characters: a paste whose lines are nearly all shorter is a list, not a wrapped column
+  // Preview's font sizes: a heading is clearly bigger than the body text, and short.
+  const HEADING_SIZE = 1.15;
+  const HEADING_MAX_CHARS = 100;
+  const HEADING_MAX_WORDS = 12;
   // Words often joined to the next with a real hyphen ("self-attention").
   // Common second halves of hyphenated compounds ("evidence-based").
-  const COMPOUND_SUFFIXES = new Set([
-    'based',
-    'wise',
-    'like',
-    'free',
-    'level',
-    'scale',
-    'specific',
-    'related',
-    'driven',
-    'aware',
-    'oriented',
-    'wide',
-    'term',
-    'range',
-    'making',
-    'friendly',
-    'owned',
-    'led',
-    'up',
-    'out',
-    'off',
-    'in',
-    'on',
-    'down',
-    'time',
-  ]);
-  const COMPOUND_PREFIXES = new Set([
-    'self',
-    'non',
-    'multi',
-    'well',
-    'mid',
-    'cross',
-    'half',
-    'semi',
-    'anti',
-    'ex',
-    'state',
-    'follow',
-    'long',
-    'short',
-    'high',
-    'low',
-    'full',
-    'part',
-  ]);
+  // prettier-ignore
+  const COMPOUND_SUFFIXES = new Set(['based', 'wise', 'like', 'free', 'level', 'scale', 'specific', 'related', 'driven', 'aware', 'oriented', 'wide', 'term', 'range', 'making', 'friendly', 'owned', 'led', 'up', 'out', 'off', 'in', 'on', 'down', 'time']);
+  // prettier-ignore
+  const COMPOUND_PREFIXES = new Set(['self', 'non', 'multi', 'well', 'mid', 'cross', 'half', 'semi', 'anti', 'ex', 'state', 'follow', 'long', 'short', 'high', 'low', 'full', 'part']);
 
   // html: the clipboard's HTML, if any; only Preview's (Cocoa HTML Writer) is used.
   function pdfToHtml(text, html) {
@@ -120,7 +89,7 @@
       } else if (
         !block.wraps &&
         block.type === 'p' &&
-        ((isShort(lines[i - 1], width) && isShort(line, width)) || line.includes(TOC_END) || width < 25)
+        ((isShort(lines[i - 1], width) && isShort(line, width)) || line.includes(TOC_END) || width < LIST_WIDTH)
       ) {
         // Runs of short lines (addresses, sign-offs, code, contents) stay as separate lines.
         block.lines.push(line);
@@ -175,10 +144,10 @@
     const body = [...chars].sort((a, b) => b[1] - a[1])[0][0];
     const big = (l) =>
       l &&
-      l.size >= body * 1.15 &&
+      l.size >= body * HEADING_SIZE &&
       /\p{L}/u.test(l.text) &&
-      l.text.length <= 100 &&
-      l.text.split(/\s+/).length <= 12 &&
+      l.text.length <= HEADING_MAX_CHARS &&
+      l.text.split(/\s+/).length <= HEADING_MAX_WORDS &&
       !/[.;]$/.test(l.text) &&
       !LEADER.test(l.text);
     // A heading starts with a capital or digit, unless it carries on the heading
@@ -325,7 +294,7 @@
   }
 
   function isShort(line, width) {
-    return line.length < width * 0.8;
+    return line.length < width * SHORT_LINE;
   }
 
   // How full the line would be with the next line's first word added. A line
@@ -340,19 +309,18 @@
     if (new RegExp(`${HYPHEN}$`).test(prev) && /^\p{Ll}/u.test(line)) return true;
     if (DROP_CAP.test(prev) && /^\p{Ll}/u.test(line)) return true;
     if (DROP_CAP.test(line)) return false; // a drop cap starts a paragraph
-    // A paste whose lines are all under 25 characters is a list, not a wrapped column.
-    if (pageWidth < 25) return false;
+    if (pageWidth < LIST_WIDTH) return false;
     const full = fill(prev, line, width);
     // A sentence carrying on in lowercase, unless the line is short (a list
     // item, or a numbered heading like "3. Code sample").
-    if (/^[\p{Ll}(]/u.test(line) && !/[.!?:]$/.test(prev)) return full >= 0.3 && !NUMBERED_HEADING.test(prev);
+    if (/^[\p{Ll}(]/u.test(line) && !/[.!?:]$/.test(prev)) return full >= RUN_ON_LINE && !NUMBERED_HEADING.test(prev);
     // A label starts its own line in forms and notes ("Program Results: …").
     if (LABEL.test(line)) return false;
     // Lines wider than the column (titles over two columns) stand alone.
-    if (full < 0.9 || prev.length > pageWidth * 1.2) return false;
+    if (full < FULL_LINE || prev.length > pageWidth * WIDE_LINE) return false;
     // A full line followed by a short, unpunctuated line that doesn't run on is a
     // paragraph ending before a heading ("1.1 Scope").
-    const heading = line.length < width * 0.7 && /^[\p{Lu}0-9]/u.test(line) && !/[.!?:;,]$/.test(line);
+    const heading = line.length < width * HEADING_LINE && /^[\p{Lu}0-9]/u.test(line) && !/[.!?:;,]$/.test(line);
     if (heading && !(next && /^\p{Ll}/u.test(next))) return false;
     return true;
   }
@@ -470,21 +438,25 @@
   // A paste looks like PDF text when it is plain text only and several long
   // lines stop mid-sentence, with the sentence carrying on in lowercase on the
   // next line. Code and short lists don't qualify.
+  const PDF_MIN_LINES = 4;
+  const PDF_MAX_CODE_SHARE = 0.2; // more lines than this look like code (indented, or ending in { } ;)
+  const PDF_MIN_WRAP_SHARE = 0.25; // at least this share of lines must stop mid-sentence
+  const PDF_MIN_WRAP_CHARS = 30; // the typical such line is at least this long; shorter is a poem or a list
   function looksLikePdf(text) {
     const lines = (text || '').replace(/\r\n?/g, '\n').split('\n');
     const filled = lines.filter((l) => l.trim());
-    if (filled.length < 4) return false;
+    if (filled.length < PDF_MIN_LINES) return false;
     const code = filled.filter((l) => /^\s{2,}\S|[{};]\s*$/.test(l)).length;
-    if (code / filled.length > 0.2) return false;
+    if (code / filled.length > PDF_MAX_CODE_SHARE) return false;
     const wraps = [];
     for (let i = 0; i + 1 < lines.length; i++) {
       const a = lines[i].trimEnd();
       const b = lines[i + 1];
       if (a && /^\p{Ll}/u.test(b) && (!/[.!?:;,]$/.test(a) || new RegExp(`${HYPHEN}$`).test(a))) wraps.push(a.length);
     }
-    if (wraps.length < 2 || wraps.length / filled.length < 0.25) return false;
+    if (wraps.length < 2 || wraps.length / filled.length < PDF_MIN_WRAP_SHARE) return false;
     wraps.sort((x, y) => x - y);
-    return wraps[Math.floor(wraps.length / 2)] >= 30;
+    return wraps[Math.floor(wraps.length / 2)] >= PDF_MIN_WRAP_CHARS;
   }
 
   root.pdfToHtml = pdfToHtml;
