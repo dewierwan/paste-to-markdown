@@ -1,0 +1,13 @@
+Agenda
+
+• First topic
+    • detail one
+    • detail two
+• Second topic
+    • detail three
+        • deeper still
+
+People
+
+• Alex (https://example.com/a)
+• Sam

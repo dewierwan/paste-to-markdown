@@ -1,13 +1,14 @@
 // Detects where a paste came from and converts it to the chosen output.
-// Every input is read into HTML first, then each output is written from that,
-// so adding an input or an output means writing one function, not one per pair.
+// Every paste goes through the same three steps:
+//   1. read it into HTML (rich text as is, Markdown with marked, PDF text with
+//      js/from-pdf.js) and rewrite its app's quirks (js/sources.js);
+//   2. clean that HTML into a small, predictable subset (js/clean-html.js);
+//   3. write the output from it (js/to-markdown.js, js/to-text.js, or the
+//      cleaned HTML itself for Email & Slack and Docs).
+// So adding an input or an output means writing one function, not one per pair.
 (function (root) {
   const SOURCE_NAMES = {
-    gdocs: 'Google Docs',
-    notion: 'Notion',
-    word: 'Word',
-    gmail: 'Gmail',
-    airtable: 'Airtable',
+    ...Object.fromEntries(APPS.map((app) => [app.id, app.name])),
     pdf: 'PDF',
     html: 'Rich text',
     markdown: 'Markdown',
@@ -15,15 +16,12 @@
   };
 
   // clip: { html, text, types } from the paste event's clipboardData.
+  /** @param {Clip} clip @returns {{ source: string, read: ReadAs }} */
   function detect(clip) {
     const html = clip.html || '';
-    const types = clip.types || [];
     if (html) {
-      if (/docs-internal-guid/.test(html)) return { source: 'gdocs', read: 'rich' };
-      if (types.some((t) => /notion/i.test(t))) return { source: 'notion', read: 'rich' };
-      if (/urn:schemas-microsoft-com:office|class="?Mso/i.test(html)) return { source: 'word', read: 'rich' };
-      if (/class="?gmail_/.test(html)) return { source: 'gmail', read: 'rich' };
-      if (types.some((t) => /airtable/i.test(t))) return { source: 'airtable', read: 'rich' };
+      const app = findApp(clip);
+      if (app) return { source: app.id, read: 'rich' };
       // PDF viewers (Preview among them) also put HTML on the clipboard, with
       // one paragraph per printed line, so the plain text decides. Preview's
       // HTML for a page that isn't prose (contents, cover, slides) gives itself
@@ -49,15 +47,20 @@
   // all short. TextEdit and Mail write the same HTML, so it also needs a sign of
   // a printed page: more than one font size (a title or heading) or contents
   // leaders ("Introduction ______ 3").
+  const LINE_HTML_MIN_LINES = 5;
+  const LINE_HTML_MIN_P_SHARE = 0.8; // nearly every line is its own <p>
+  const PRINTED_LINE_MAX_CHARS = 150; // a printed line is rarely longer
+  const LONG_LINE_MAX_SHARE = 0.05; // allows the odd long line (a table row, a URL)
+  const MIN_LEADERS = 3;
   function isLineByLineHtml(html, text) {
     if (!/Cocoa HTML Writer/.test(html)) return false;
     const lines = (text || '').split(/\r?\n/).filter((l) => l.trim());
     const paragraphs = (html.match(/<p[ >]/g) || []).length;
-    if (lines.length < 5 || paragraphs < lines.length * 0.8) return false;
-    if (lines.filter((l) => l.length > 150).length > lines.length * 0.05) return false;
+    if (lines.length < LINE_HTML_MIN_LINES || paragraphs < lines.length * LINE_HTML_MIN_P_SHARE) return false;
+    if (lines.filter((l) => l.length > PRINTED_LINE_MAX_CHARS).length > lines.length * LONG_LINE_MAX_SHARE) return false;
     const sizes = new Set(html.match(/font: [\d.]+px/g) || []);
     const leaders = lines.filter((l) => /[_.·…]{4,}\s*\d{0,4}$/.test(l)).length;
-    return sizes.size > 1 || leaders >= 3;
+    return sizes.size > 1 || leaders >= MIN_LEADERS;
   }
 
   function hasFormatting(html) {
@@ -100,34 +103,41 @@
   // output: 'markdown' | 'email' | 'rich' | 'whatsapp' | 'plain'.
   // Returns { text, html } where html is set only for rich output.
   function convertClip(clip, readAs, output) {
-    const docs = readAs === 'rich' && /docs-internal-guid/.test(clip.html || '');
-    let html;
-    if (readAs === 'rich') html = clip.html || textToHtml(clip.text);
-    else if (readAs === 'markdown') html = marked.parse(clip.text || '', { gfm: true });
-    else if (readAs === 'pdf') html = pdfToHtml(clip.text, clip.html);
-    else html = textToHtml(clip.text);
+    // Markdown and plain text are already Markdown.
+    if (output === 'markdown' && (readAs === 'markdown' || readAs === 'text')) {
+      return { text: (clip.text || '').replace(/\r\n/g, '\n').trim() };
+    }
 
+    const { html, spacing } = readHtml(clip, readAs);
     if (output === 'markdown') {
-      if (readAs === 'pdf') return { text: convertToMarkdown(html) };
-      if (readAs !== 'rich') return { text: (clip.text || '').replace(/\r\n/g, '\n').trim() };
-      // Docs hides formatting in styles, so normalise it before writing Markdown.
-      const source = docs ? cleanHtml(html, { target: 'markdown', docs: true }) : html;
-      return { text: unescapeOverEscaped(stripImages(stripWrappingFence(convertToMarkdown(source)))) };
+      const markdown = convertToMarkdown(cleanHtml(html, { target: 'markdown', spacing }));
+      return { text: unescapeOverEscaped(stripImages(stripWrappingFence(markdown))) };
     }
 
     // Email markup (headings as bold lines) also feeds the text writers.
-    const email = cleanHtml(html, { target: 'rich', headings: 'bold', docs });
+    const email = cleanHtml(html, { target: 'rich', headings: 'bold', spacing });
     const plain = toText(email, 'plain');
     if (output === 'email') return { html: email, text: plain };
-    if (output === 'rich') return { html: cleanHtml(html, { target: 'rich', headings: 'keep', docs }), text: plain };
+    if (output === 'rich') return { html: cleanHtml(html, { target: 'rich', headings: 'keep', spacing }), text: plain };
     return { text: output === 'plain' ? plain : toText(email, output) };
+  }
+
+  // Step 1: the paste as HTML, with its app's quirks rewritten, and how that
+  // app marks blank lines (see js/sources.js).
+  /** @param {Clip} clip @param {ReadAs} readAs @returns {{ html: string, spacing: Spacing }} */
+  function readHtml(clip, readAs) {
+    if (readAs === 'markdown') return { html: marked.parse(clip.text || '', { gfm: true }), spacing: 'tags' };
+    if (readAs === 'pdf') return { html: pdfToHtml(clip.text, clip.html), spacing: 'tags' };
+    if (readAs !== 'rich' || !clip.html) return { html: textToHtml(clip.text), spacing: 'tags' };
+    const app = findApp(clip);
+    return { html: fixHtml(clip.html, app), spacing: (app && app.spacing) || 'tags' };
   }
 
   function textToHtml(text) {
     return (text || '')
       .replace(/\r\n/g, '\n')
       .split('\n')
-      .map((line) => (line ? `<div>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : '<div><br></div>'))
+      .map((line) => (line ? `<div>${escapeHtml(line)}</div>` : '<div><br></div>'))
       .join('');
   }
 

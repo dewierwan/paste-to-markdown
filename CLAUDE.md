@@ -1,37 +1,57 @@
-# Paste to Markdown Project Guidelines
+# Paste Into
 
-## Build & Development Commands
-- **Run development server:** Open `index.html` directly in a browser
-- **Tests:** `npm test` (vitest + jsdom; `tests/load.js` loads the scripts in `index.html` order)
-- **Spell check:** `npx cspell "**/*.{html,js,md,json}"`
-- **Validate HTML:** `npx html-validate index.html`
+Paste anything, pick where it's going, and the result is copied. The site at pasteinto.com and the Chrome extension popup are the same static files. There is no build step.
 
-## Code Style Guidelines
+## Commands
 
-### HTML/CSS/JavaScript
-- Use 2-space indentation
-- Prefer double quotes for HTML attributes and JavaScript strings
-- Add comments for complex logic sections
-- Use semantic HTML elements where appropriate
-- Maintain consistent class/ID naming conventions (camelCase)
-- Follow BEM methodology for CSS class naming when applicable
+- **Run it:** open `index.html` in a browser.
+- **Tests:** `npm test` (vitest + jsdom; `tests/load.js` loads the scripts in `index.html` order).
+- **Rewrite expected outputs after an intended change:** `npm run test:update`, then review the diff.
+- **Type check:** `npm run typecheck` (tsc over JSDoc; no compiling).
+- **Lint and format:** `npm run lint`, `npm run format` (`npm run format:check` in CI).
+- **Spelling and HTML:** `npm run lint:spell`, `npm run lint:html`.
+- **Save a real paste as a fixture:** `npm run capture`.
+- **Pack the extension:** `npm run pack:extension`.
 
-### Error Handling
-- Use try/catch blocks for error-prone operations
-- Display user-friendly error messages
-- Log errors to console for debugging
+CI runs format check, lint, type check, spelling, HTML validation and tests on every push and pull request.
 
-### Markdown Generation
-- Follow GitHub Flavored Markdown spec
-- Maintain proper spacing between elements
-- Handle special characters and formatting correctly
+## How it works
 
-## Project Structure
-- No build step: `index.html`, `css/app.css`, and classic scripts in `js/` that attach functions to `globalThis`
-- Pipeline: `js/convert.js` detects the source and reads every paste into HTML (`js/from-pdf.js` for PDF text); `js/clean-html.js`, `js/to-markdown.js` and `js/to-text.js` write the outputs; `js/app.js` is the page wiring
-- Third-party code lives in `js/vendor/` unmodified (currently marked, MIT)
-- When adding a script, add it to both `index.html` and `tests/load.js`
-- After changing any file in `css/` or `js/`, run `npm run stamp` (updates the `?v=` content hashes in `index.html` so browsers don't mix new and cached files; a test fails if you forget)
-- Store image assets in root directory
-- `index.html` is also the Chrome extension popup (`manifest.json`). Keep it free of inline scripts, inline event handlers and remote code, which extensions refuse (a test checks). Popup-only styles go under `html.is-extension`, set by `js/extension.js`
-- `npm run pack:extension` zips the files the page references into `dist/` for the Chrome Web Store; bump `version` in `manifest.json` for each release
+Every paste goes through three steps (`js/convert.js`):
+
+1. **Read** into HTML. Rich text is used as is, Markdown goes through `js/vendor/marked.umd.js`, and PDF text goes through `js/from-pdf.js`. `js/sources.js` lists the apps (detection rule, name, paragraph spacing) and rewrites each app's quirks into plain HTML.
+2. **Clean** with `js/clean-html.js` into a small, predictable subset. The cleaner knows nothing about specific apps.
+3. **Write** the output. `js/to-markdown.js` writes Markdown and `js/to-text.js` writes WhatsApp and plain text. Email & Slack and Docs use the cleaned HTML itself.
+
+`js/app.js` wires up the page, `js/analytics.js` sends anonymous counts and `js/extension.js` adjusts the page when it runs as the extension popup.
+
+### Where a change goes
+
+- **A quirk of one app** (odd markup, flat lists, hidden formatting) goes in that app's `fix` in `js/sources.js`. Don't add app checks to the cleaner or the writers.
+- **A new app** gets an entry in `APPS` in `js/sources.js` and a fixture.
+- **A new output** gets a writer that reads the cleaner's output, plus a case in `convertClip`.
+
+## Code conventions
+
+- Each script is a classic script wrapped in `(function (root) { ... })(globalThis)` that attaches its public functions to `globalThis`. Declare each new shared function in `types/globals.d.ts` and `eslint.config.mjs`.
+- When adding a script, add it to `index.html` and `tests/load.js`, and to the page in `scripts/capture-fixture.mjs` if detection needs it.
+- Shared helpers (`escapeHtml`, `escapeAttr`, `wrapMarkers`) live in `js/util.js`. Reuse them rather than copying.
+- Prettier sets the style for JavaScript and JSON: single quotes, trailing commas, 140 columns. CSS and HTML are formatted by hand.
+- Comments explain why, in plain English, with a real example where it helps ("Gmail writes `<div>Hi Sam,<div><br></div>…`").
+- Give thresholds a named constant with a one-line reason.
+- Parse pasted HTML only with `DOMParser`, never `innerHTML` on an element of the live page: browsers run event handlers in it. A test checks this.
+- Third-party code lives unmodified in `js/vendor/` (currently marked, MIT).
+
+## Tests
+
+- Unit tests are in `tests/*.test.js`.
+- `tests/fixtures.test.js` runs every fixture through detection and all five outputs, and compares the results with the expected files saved next to it. `tests/fixtures/README.md` explains the format and which fixtures are hand-built.
+- Prefer a real capture (`npm run capture`) over a hand-written fixture.
+
+## The extension and releases
+
+- `index.html` is also the extension popup (`manifest.json`). Keep it free of inline scripts, inline event handlers and remote code, which extensions refuse; a test checks this. Popup-only styles go under `html.is-extension`, set by `js/extension.js`.
+- `index.html` sets a Content-Security-Policy. A new remote connection (like Umami's `connect-src`) or image source needs adding there.
+- After changing any file in `css/` or `js/`, run `npm run stamp`. It updates the `?v=` content hashes in `index.html` so browsers don't mix new and cached files. A test fails if you forget.
+- To release: bump `version` in `manifest.json`, run `npm run pack:extension`, upload the zip to the Chrome Web Store, then push a tag `v<version>`. CI attaches the zip to a GitHub release.
+- Pushing to `main` deploys the site through GitHub Pages.

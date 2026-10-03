@@ -6,16 +6,33 @@
 //   headings "bold" (email: Gmail, Outlook and Slack have no headings) turns
 //   headings into bold lines; headings "keep" (Docs, Notion, Airtable) keeps
 //   <h1>–<h6> at their original level.
-// target "markdown": semantic tags (<p>, <h1>, <pre>) for the Markdown writer.
+// target "markdown": semantic tags (<p>, <h1>, <pre>, <input type="checkbox">)
+//   for the Markdown writer.
 //
-// Google Docs needs special handling: it writes paragraphs as <p> lines with
-// explicit empty paragraphs between them, keeps formatting in inline styles,
-// and flattens nested lists. Other sources use <p> for spaced paragraphs.
+// spacing "tags" (most apps): <p> and headings are spaced paragraphs, <div>s are
+// lines. spacing "margins" (Google Docs): every paragraph is a <p> line, with a
+// blank line where a paragraph has space above or below it, or is empty.
+// js/sources.js says which an app uses, and rewrites app quirks before this runs.
 (function (root) {
   const SKIP_TAGS = new Set(['STYLE', 'SCRIPT', 'META', 'TITLE', 'HEAD', 'LINK', 'COLGROUP', 'COL']);
   const BLOCK_TAGS = new Set([
-    'P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
-    'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'ASIDE', 'NAV', 'FIGURE', 'FIGCAPTION',
+    'P',
+    'DIV',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'SECTION',
+    'ARTICLE',
+    'HEADER',
+    'FOOTER',
+    'MAIN',
+    'ASIDE',
+    'NAV',
+    'FIGURE',
+    'FIGCAPTION',
   ]);
   const STRUCTURE_TAGS = new Set(['UL', 'OL', 'TABLE', 'HR', 'PRE', 'BLOCKQUOTE', ...BLOCK_TAGS]);
   const MERGEABLE_TAGS = new Set(['B', 'I', 'U', 'S', 'SUB', 'SUP', 'A', 'CODE', 'FONT']);
@@ -28,24 +45,57 @@
     const opts = {
       target: options.target || 'rich',
       headings: options.headings || 'bold',
-      docs: options.docs ?? /docs-internal-guid/.test(html),
+      margins: options.spacing === 'margins',
     };
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    const start = { b: false, i: false, u: false, s: false, sup: false, sub: false, code: false, heading: false, href: null };
+    const start = { b: false, i: false, u: false, s: false, sup: false, sub: false, code: false, mark: false, heading: false, href: null };
     const out = convertChildren(doc.body, start, 'block', opts);
     return finish(out, opts);
   }
 
   function convertChildren(el, fmt, mode, opts) {
+    return convertNodes(el.childNodes, fmt, mode, opts);
+  }
+
+  function convertNodes(nodes, fmt, mode, opts) {
+    if (mode === 'block')
+      return wrapLooseText(
+        Array.from(nodes, (child) => convertNode(child, fmt, mode, opts)),
+        opts,
+      );
     let html = '';
     let prevWasBlock = false;
-    for (const child of el.childNodes) {
+    for (const child of nodes) {
       const isBlock = child.nodeType === 1 && BLOCK_TAGS.has(child.tagName);
       // Inside a list item or table cell, separate paragraphs with line breaks.
-      if (mode === 'inline' && isBlock && prevWasBlock) html += '<br>';
+      if (isBlock && prevWasBlock) html += '<br>';
       html += convertNode(child, fmt, mode, opts);
       if (child.nodeType === 1 || child.textContent.trim()) prevWasBlock = isBlock;
     }
+    return html;
+  }
+
+  // Text loose among blocks is a line of its own: Gmail writes
+  // <div>Hi Sam,<div><br></div><div>Thanks…</div></div>. With no blocks around
+  // it (a selection inside one paragraph), it stays inline.
+  function wrapLooseText(parts, opts) {
+    const isBlock = (part) => /^<(div|p|h[1-6]|ul|ol|table|blockquote|pre|hr)[\s>]/.test(part);
+    if (!parts.some(isBlock)) return parts.join('');
+    let html = '';
+    let loose = '';
+    const flush = () => {
+      if (loose.replace(/<br>|&nbsp;|\s/g, '')) html += opts.target === 'rich' ? `<div>${loose}</div>` : `<p>${loose}</p>`;
+      loose = '';
+    };
+    for (const part of parts) {
+      if (isBlock(part)) {
+        flush();
+        html += part;
+      } else {
+        loose += part;
+      }
+    }
+    flush();
     return html;
   }
 
@@ -59,7 +109,11 @@
     if (tag === 'BR') return mode === 'block' ? (rich ? EMPTY_LINE : '') : '<br>';
     if (tag === 'HR') return '<hr>';
     if (tag === 'IMG') return renderImage(node);
-    if (tag === 'INPUT') return node.type === 'checkbox' ? (node.checked ? '☑ ' : '☐ ') : '';
+    if (tag === 'INPUT') {
+      if (node.type !== 'checkbox') return '';
+      if (!rich) return node.checked ? '<input type="checkbox" checked>' : '<input type="checkbox">';
+      return node.checked ? '☑ ' : '☐ ';
+    }
     if (tag === 'PRE') return renderCodeBlock(node, opts);
 
     const f = nextFormat(node, fmt);
@@ -84,18 +138,19 @@
   function wrapBlock(node, inner, opts) {
     const tag = node.tagName;
     const heading = /^H[1-6]$/.test(tag);
+    const empty = !inner.replace(/<br>|&nbsp;|\s/g, ''); // includes Word's <p>&nbsp;</p>
     if (opts.target === 'markdown') {
-      if (!inner) return '';
+      if (empty) return '';
       return heading ? `<${tag.toLowerCase()}>${inner}</${tag.toLowerCase()}>` : `<p>${inner}</p>`;
     }
-    if (!inner.replace(/<br>|&nbsp;|\s/g, '')) return EMPTY_LINE; // includes Word's <p>&nbsp;</p>
+    if (empty) return EMPTY_LINE;
     // Real headings carry their own spacing, so no blank lines around them.
     if (heading && opts.headings === 'keep') return `<${tag.toLowerCase()}>${inner}</${tag.toLowerCase()}>`;
-    // Outside Docs, <p> and headings are spaced paragraphs; <div>s are lines.
-    const spaced = !opts.docs && (tag === 'P' || heading);
-    // In Docs, a paragraph is a line unless it has "space after" (or before) set.
-    const gapAfter = opts.docs && tag === 'P' && hasSpacing(node.style.marginBottom);
-    const gapBefore = opts.docs && tag === 'P' && hasSpacing(node.style.marginTop);
+    // Spaced by tags: <p> and headings are spaced paragraphs; <div>s are lines.
+    const spaced = !opts.margins && (tag === 'P' || heading);
+    // Spaced by margins: a paragraph is a line unless it has space after (or before) it.
+    const gapAfter = opts.margins && tag === 'P' && hasSpacing(node.style.marginBottom);
+    const gapBefore = opts.margins && tag === 'P' && hasSpacing(node.style.marginTop);
     const attrs = (spaced ? ' data-p' : '') + (gapAfter ? ' data-gap-after' : '') + (gapBefore ? ' data-gap-before' : '');
     return `<div${attrs}>${inner}</div>`;
   }
@@ -118,6 +173,7 @@
     if (tag === 'SUP') f.sup = true;
     if (tag === 'SUB') f.sub = true;
     if (tag === 'CODE' || tag === 'KBD' || tag === 'SAMP' || tag === 'TT') f.code = true;
+    if (tag === 'MARK') f.mark = true;
     if (/^H[1-6]$/.test(tag)) f.heading = true;
     if (tag === 'A') {
       const href = cleanHref(el.getAttribute('href'));
@@ -162,6 +218,7 @@
     if (!t) return '';
     const rich = opts.target === 'rich';
     if (fmt.code) t = rich ? `<font face="monospace">${t}</font>` : `<code>${t}</code>`;
+    if (fmt.mark && !rich) t = `<mark>${t}</mark>`;
     if (fmt.sub) t = `<sub>${t}</sub>`;
     if (fmt.sup) t = `<sup>${t}</sup>`;
     if (fmt.s) t = `<s>${t}</s>`;
@@ -191,8 +248,9 @@
     return `<div data-p><font face="monospace">${code.replace(/\n/g, '<br>').replace(/ {2}/g, '  ')}</font></div>`;
   }
 
-  // Docs writes nested lists as sibling <ul>s with aria-level on each <li>, while
-  // other sources nest properly. Flatten to (level, type, content), then rebuild.
+  // Some apps (Google Docs, Quill, Word once fixed) write nested lists flat, with
+  // aria-level on each <li>; others nest properly. Flatten to (level, type,
+  // content), then rebuild.
   function renderList(listEl, fmt, opts) {
     const items = [];
     collectListItems(listEl, 0, fmt, opts, items);
@@ -216,7 +274,7 @@
     }
     while (stack.length) html += `</li></${stack.pop().tag}>`;
     // Mark the outer list as a spaced block (the first open tag).
-    return opts.target === 'rich' && !opts.docs ? html.replace(/^<(ul|ol)/, '<$1 data-p') : html;
+    return opts.target === 'rich' && !opts.margins ? html.replace(/^<(ul|ol)/, '<$1 data-p') : html;
   }
 
   function collectListItems(listEl, depth, fmt, opts, items) {
@@ -225,22 +283,20 @@
         collectListItems(child, depth + 1, fmt, opts, items);
       } else if (child.tagName === 'LI') {
         const ariaLevel = parseInt(child.getAttribute('aria-level'), 10);
-        // Quill (Airtable, many web editors) keeps lists flat and marks nesting
-        // with class="ql-indent-N"; Quill 2 also says bullet vs number per item.
-        const quillIndent = parseInt((child.className.match(/\bql-indent-(\d+)/) || [])[1], 10) || 0;
-        const quillList = child.getAttribute('data-list');
-        const tag = quillList === 'bullet' ? 'ul' : quillList === 'ordered' ? 'ol' : listEl.tagName.toLowerCase();
+        const listType = child.getAttribute('data-list-type');
+        const tag = listType === 'ul' || listType === 'ol' ? listType : listEl.tagName.toLowerCase();
         const type = tag === 'ol' && OL_TYPES[child.style.listStyleType];
-        const itemFmt = nextFormat(child, fmt);
-        let html = '';
-        const nested = [];
-        for (const node of child.childNodes) {
-          if (node.nodeType === 1 && (node.tagName === 'UL' || node.tagName === 'OL')) nested.push(node);
-          else html += convertNode(node, itemFmt, 'inline', opts);
-        }
+        const isList = (node) => node.nodeType === 1 && (node.tagName === 'UL' || node.tagName === 'OL');
+        const nested = Array.from(child.childNodes).filter(isList);
+        const html = convertNodes(
+          Array.from(child.childNodes).filter((node) => !isList(node)),
+          nextFormat(child, fmt),
+          'inline',
+          opts,
+        );
         const style = opts.target === 'rich' ? LIST_STYLE : '';
         items.push({
-          level: ariaLevel > 0 ? ariaLevel - 1 : depth + quillIndent,
+          level: ariaLevel > 0 ? ariaLevel - 1 : depth,
           tag,
           open: `<${tag}${type ? ` type="${type}"` : ''}${style}>`,
           html: html || '<br>',
@@ -290,8 +346,11 @@
     while (child) {
       const next = child.nextSibling;
       if (
-        next && child.nodeType === 1 && next.nodeType === 1 &&
-        MERGEABLE_TAGS.has(child.tagName) && child.tagName === next.tagName &&
+        next &&
+        child.nodeType === 1 &&
+        next.nodeType === 1 &&
+        MERGEABLE_TAGS.has(child.tagName) &&
+        child.tagName === next.tagName &&
         child.getAttribute('href') === next.getAttribute('href') &&
         child.getAttribute('face') === next.getAttribute('face')
       ) {
@@ -314,13 +373,13 @@
     children.forEach((el, i) => {
       const prev = children[i - 1];
       const spaced = prev && el.hasAttribute('data-p') && prev.hasAttribute('data-p');
-      const docsGap = prev && !isEmptyLine(el) && !isEmptyLine(prev) &&
-        (prev.hasAttribute('data-gap-after') || el.hasAttribute('data-gap-before'));
-      if (spaced || docsGap) {
+      const marginGap =
+        prev && !isEmptyLine(el) && !isEmptyLine(prev) && (prev.hasAttribute('data-gap-after') || el.hasAttribute('data-gap-before'));
+      if (spaced || marginGap) {
         el.insertAdjacentHTML('beforebegin', EMPTY_LINE);
       }
     });
-    if (!opts.docs) {
+    if (!opts.margins) {
       // Word and web pages often pad with empty paragraphs; keep one blank line.
       for (const el of Array.from(container.children)) {
         if (isEmptyLine(el) && isEmptyLine(el.previousElementSibling)) el.remove();
@@ -331,14 +390,6 @@
   function trimEmptyLines(body) {
     while (isEmptyLine(body.firstChild)) body.firstChild.remove();
     while (isEmptyLine(body.lastChild)) body.lastChild.remove();
-  }
-
-  function escapeHtml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function escapeAttr(s) {
-    return escapeHtml(s).replace(/"/g, '&quot;');
   }
 
   root.cleanHtml = cleanHtml;

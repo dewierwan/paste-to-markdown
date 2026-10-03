@@ -9,7 +9,9 @@ const html = readFileSync(resolve(root, 'index.html'), 'utf-8');
 
 it('packs every file the extension popup needs', () => {
   const files = extensionFiles();
-  expect(files).toEqual(expect.arrayContaining(['manifest.json', 'index.html', 'css/app.css', 'js/app.js', 'fonts/InterVariable.woff2', 'icons/icon-128.png']));
+  expect(files).toEqual(
+    expect.arrayContaining(['manifest.json', 'index.html', 'css/app.css', 'js/app.js', 'fonts/InterVariable.woff2', 'icons/icon-128.png']),
+  );
   expect(files.filter((path) => !existsSync(resolve(root, path)))).toEqual([]);
   expect(files.some((path) => path.startsWith('tests/') || path.startsWith('node_modules/'))).toBe(false);
 });
@@ -27,4 +29,12 @@ it('keeps index.html loadable as an extension page', () => {
   expect(html).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>/);
   expect(html).not.toMatch(/\son[a-z]+="/);
   expect(html).not.toMatch(/<script[^>]+src="https?:/);
+});
+
+// A Content-Security-Policy is the backstop if pasted HTML ever reaches the page.
+it('sets a Content-Security-Policy that blocks inline scripts', () => {
+  const csp = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/);
+  expect(csp).not.toBeNull();
+  expect(csp[1]).toMatch(/script-src 'self';/);
+  expect(csp[1]).not.toMatch(/script-src[^;]*unsafe-inline/);
 });

@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Backstop if pasted HTML ever reaches the page: no inline or remote scripts. Inline styles stay allowed for the Docs and email previews. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https:; connect-src https://gateway.umami.is; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Paste Into: Markdown, email and Slack, Docs, WhatsApp or plain text</title>
   <meta name="description" content="Paste from Google Docs, Notion, Word, Claude or anywhere. Get Markdown, email and Slack text, rich text, WhatsApp text or plain text, auto-copied to your clipboard.">
   <link rel="icon" type="image/png" href="paperclip.png">
   <link rel="preload" href="fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/iAWriterMonoS-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css?v=3900f3b2">
-  <script src="js/extension.js?v=6aa5ea2a"></script>
+  <script src="js/extension.js?v=a0886e2a"></script>
 </head>
 <body>
   <main class="page">
@@ -58,12 +60,14 @@
   </main>
 
   <script src="js/vendor/marked.umd.js?v=21568877"></script>
-  <script src="js/clean-html.js?v=16b3a2e3"></script>
-  <script src="js/to-markdown.js?v=eb9a166b"></script>
-  <script src="js/to-text.js?v=34c0a88d"></script>
-  <script src="js/from-pdf.js?v=394482df"></script>
-  <script src="js/convert.js?v=ac2d9b7b"></script>
-  <script src="js/analytics.js?v=96ca48e7"></script>
-  <script src="js/app.js?v=cc3077fc"></script>
+  <script src="js/util.js?v=515a5bbb"></script>
+  <script src="js/clean-html.js?v=407c6e6e"></script>
+  <script src="js/to-markdown.js?v=efab0910"></script>
+  <script src="js/to-text.js?v=509e2c9c"></script>
+  <script src="js/sources.js?v=afac76c5"></script>
+  <script src="js/from-pdf.js?v=8daec111"></script>
+  <script src="js/convert.js?v=a6b55329"></script>
+  <script src="js/analytics.js?v=92c5be23"></script>
+  <script src="js/app.js?v=c2381eda"></script>
 </body>
 </html>

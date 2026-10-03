@@ -1,19 +1,30 @@
 {
   "name": "pasteinto",
   "private": true,
-  "description": "Tests + lint scaffolding. The site itself stays static files with no build step; the same files are the Chrome extension.",
+  "description": "Tests, lint and type checks. The site itself stays static files with no build step; the same files are the Chrome extension.",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:update": "vitest run -u",
+    "typecheck": "tsc -p .",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint:spell": "cspell \"**/*.{html,js,md,json}\"",
     "lint:html": "html-validate index.html",
     "stamp": "node scripts/stamp.mjs",
-    "pack:extension": "node scripts/pack-extension.mjs"
+    "pack:extension": "node scripts/pack-extension.mjs",
+    "capture": "node scripts/capture-fixture.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "cspell": "^8.0.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
     "html-validate": "^8.0.0",
     "jsdom": "^24.0.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
     "vitest": "^1.6.0"
   }
 }

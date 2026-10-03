@@ -1,0 +1,72 @@
+Table 3. Other Situations When You Must File a 2025 Return You must file a return if any of the conditions below apply.
+
+1. 2. 3. 4. 5. 6. 7. You owe any special taxes reported on Schedule 2 (Form 1040), including any of the following. (See the instructions for Schedule 2 (Form 1040).)
+
+a. Alternative minimum tax.
+
+b. Additional tax on a qualified plan, including an individual retirement arrangement (IRA), or other tax-favored account.
+
+c. Social security or Medicare tax on tips you didn’t report to your employer or on wages you received from an employer who didn’t withhold these taxes.
+
+d. Uncollected social security, Medicare, or railroad retirement tax on tips you reported to your employer or on group-term life insurance and additional taxes on health savings accounts.
+
+e. Household employment taxes.
+f. Recapture taxes.
+
+You (or your spouse if filing jointly) received Archer MSA, Medicare Advantage MSA, or health savings account distributions. You had net earnings from self-employment of at least $400.
+
+You had wages of $108.28 or more from a church or qualified church-controlled organization that is exempt from employer social security and Medicare taxes.
+
+Advance payments of the premium tax credit were made for you, your spouse, or a dependent who enrolled in coverage through the Health Insurance Marketplace. You or whoever enrolled you should have received Form(s) 1095-A showing the amount of the advance payments.
+
+You are required to include amounts in income under section 965 or you have a net tax liability under section 965 that you are paying in installments under section 965(h) or deferred by making an election under section 965(i). You purchased a new or used clean vehicle from a registered dealer and reduced the amount you paid at the time of sale by transferring the credit to the dealer. See Form 8936 and Schedule A (Form 8936).
+
+Other Situations
+
+You may have to file a tax return even if your gross income is less than the amount shown in Table 1 or Table 2 for your filing status. See Table 3 for those other situations when you must file.
+
+6. You qualify for the premium tax credit. See Form 8962.
+
+Form 1099-B or Form 1099-DA received.
+
+Even if you aren’t required to file a return, you should consider filing if all of the following apply.
+
+- You received a Form 1099-B or Form 1099-DA (or substitute statement).
+- The amount in box 1d on Form 1099-B or the amount in box 1f on Form 1099-DA (or substitute statement), when added to your other gross income, means you have to file a tax return because of the filing requirement in Table 1 or Table 2 that applies to you.
+- Box 1e on Form 1099-B or box 1g on Form 1099-DA (or substitute statement) is blank. In this case, filing a return may keep you from getting a notice from the IRS.
+
+make the election for this child unless the child was a student. Similarly, a child born on January 1, 2002, is considered to be age 24 at the end of 2025; you can’t make the election for this child.)
+
+- Your child had gross income only from interest and dividends (including capital gain distributions and Alaska Permanent Fund dividends).
+- The interest and dividend income was less than $13,500.
+- Your child is required to file a return for 2025 unless you make this election.
+- Your child doesn’t file a joint return for 2025.
+- No estimated tax payment was made for 2025 and no 2024 overpayment was applied to 2025 under your child’s name and SSN.
+- No federal income tax was withheld from your child’s income under the backup withholding rules.
+- You are the parent whose return must be used when making the election to report your child’s unearned income.
+
+For more information, see Form 8814, Parents’ Election To Report Child’s Interest and Dividends, and its instructions.
+
+Who Should File
+
+Even if you don’t have to file, you should file a tax return if you can get money back. For example, you should file if one of the following applies.
+
+1. You had income tax withheld from your 2. pay.
+
+You made estimated tax payments for the year or had any of your overpayment for last year applied to this year’s estimated tax.
+
+Filing Status
+
+3. You qualify for the earned income credit. See Pub. 596 for more information.
+
+4. You qualify for the additional child tax credit. See Schedule 8812 (Form 1040) for more information.
+
+You must determine your filing status before you can determine whether you must file a tax return, your standard deduction (discussed later), and your tax. You also use your filing status to determine whether you are eligible to claim certain other deductions and credits.
+
+5. You qualify for the refundable American opportunity credit. See Form 8863.
+
+There are five filing statuses.
+
+- Single.
+
+Publication 501 (2025) 5

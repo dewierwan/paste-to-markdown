@@ -1,0 +1,12 @@
+*Plan*
+
+Ship *the program* by _15 Nov_. Steps:
+
+1. Draft the curriculum
+2. Recruit facilitators
+    - Start with alumni
+
+```def greet():
+    return "hi"```
+
+Want me to draft the email?

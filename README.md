@@ -29,7 +29,14 @@ Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/
 
 The same files are also a Chrome extension: `manifest.json` opens `index.html` as the toolbar popup. Click the paperclip (or press Alt+Shift+V, which you can change at `chrome://extensions/shortcuts`), paste, and the result is copied.
 
-To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick this folder. `npm run pack:extension` writes the Chrome Web Store upload to `dist/`; bump `version` in `manifest.json` first for each release.
+To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpacked and pick this folder.
+
+To release a new version:
+
+1. Bump `version` in `manifest.json`.
+2. Run `npm run pack:extension`. It writes the Chrome Web Store upload to `dist/`, and refuses if that version already has a tag.
+3. Upload the zip to the Chrome Web Store.
+4. Tag the release: `git tag v1.2.3 && git push origin v1.2.3`. CI checks the tag matches `manifest.json`, runs the tests and attaches the zip to a GitHub release.
 
 ## Privacy
 
@@ -46,15 +53,13 @@ open pasteinto/index.html
 
 ## How it works
 
-Every paste is read into HTML (`js/convert.js` detects the source; Markdown is parsed with the vendored [marked](https://github.com/markedjs/marked)), then written out:
+Every paste goes through the same three steps (`js/convert.js`):
 
-- `js/clean-html.js` normalises HTML to a small, predictable subset (the Email & Slack and Docs outputs, and the input to the text writers).
-- `js/from-pdf.js` rebuilds paragraphs and lists from PDF text.
-- `js/to-markdown.js` writes Markdown.
-- `js/to-text.js` writes WhatsApp and plain text.
-- `js/app.js` wires up the page.
+1. **Read** it into HTML. Rich text is used as is, Markdown is parsed with the vendored [marked](https://github.com/markedjs/marked), and `js/from-pdf.js` rebuilds paragraphs and lists from PDF text. `js/sources.js` lists the apps a paste can come from, how to recognise each, and rewrites each app's quirks (Word's list paragraphs, Quill's flat lists) into plain HTML.
+2. **Clean** it: `js/clean-html.js` reduces the HTML to a small, predictable subset. It knows nothing about any particular app.
+3. **Write** the output from that: `js/to-markdown.js` writes Markdown, `js/to-text.js` writes WhatsApp and plain text, and the cleaned HTML itself is the Email & Slack and Docs output.
 
-Adding an input or an output means writing one function, not one per pair.
+`js/app.js` wires up the page. Adding an input or an output means writing one function, not one per pair, and a fix for one app's quirk goes in one place.
 
 ## Roadmap
 
@@ -81,7 +86,7 @@ The page title lists features, but people search for the problem, especially pas
 
 ## Contributing
 
-Real-world fixtures are the most useful contribution: put a clipboard HTML sample in `tests/fixtures/<source>/<scenario>.html` with the expected Markdown in `<scenario>.expected.md`. For PDFs, add the copied text to `tests/fixtures/pdf/` (and the clipboard HTML, if the viewer wrote any) with a test in `tests/pdf.test.js`.
+Real-world fixtures are the most useful contribution. Run `npm run capture`, paste from the app, save, then run `npm run test:update` and check the expected outputs it writes. [`tests/fixtures/README.md`](tests/fixtures/README.md) has the details. For PDFs, add the copied text to `tests/fixtures/pdf/` (and the clipboard HTML, if the viewer wrote any) with a test in `tests/pdf.test.js`.
 
 ```sh
 npm install

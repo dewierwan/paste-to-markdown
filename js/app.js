@@ -19,12 +19,16 @@
   const noun = document.getElementById('outputNoun');
   const sourceHint = document.getElementById('sourceHint');
   const readGroup = document.getElementById('readPills');
+  /** @type {HTMLButtonElement[]} */
   const readPills = Array.from(readGroup.querySelectorAll('.pill'));
+  /** @type {HTMLButtonElement[]} */
   const pills = Array.from(document.querySelectorAll('[data-output]'));
 
+  /** @type {Output} */
   let current = load() || 'markdown';
   let clip = null; // { html, text, types }
   let detected = null; // { source, read }
+  /** @type {ReadAs | null} */
   let readAs = null; // detected.read unless the user picks another "From" option
   let result = null; // the last conversion
   let copyPending = false; // a phone refused the automatic copy; the next tap copies
@@ -44,14 +48,14 @@
 
   pills.forEach((pill) => {
     pill.addEventListener('click', () => {
-      selectOutput(pill.dataset.output, true);
+      selectOutput(/** @type {Output} */ (pill.dataset.output), true);
       track('format', { format: current, pasted: Boolean(clip) });
     });
   });
 
   readPills.forEach((pill) => {
     pill.addEventListener('click', () => {
-      readAs = pill.dataset.read;
+      readAs = /** @type {ReadAs} */ (pill.dataset.read);
       showReadAs();
       render(true);
       // A changed "From" choice suggests detection got this paste wrong.
@@ -84,7 +88,9 @@
     detected = detect(clip);
     readAs = detected.read;
     readGroup.removeAttribute('aria-disabled');
-    readPills.forEach((p) => { p.disabled = false; });
+    readPills.forEach((p) => {
+      p.disabled = false;
+    });
     // Name the app when we recognise one; otherwise the selected pill says it all.
     const app = APP_SOURCES.includes(detected.source) ? SOURCE_NAMES[detected.source] : null;
     sourceHint.textContent = app ? `Detected ${app}` : 'Detected automatically';
@@ -148,6 +154,7 @@
     readPills.forEach((p) => p.setAttribute('aria-pressed', String(p.dataset.read === readAs)));
   }
 
+  /** @param {Output} name @param {boolean} copy */
   function selectOutput(name, copy) {
     current = name;
     save(name);
@@ -209,14 +216,18 @@
     flash.classList.toggle('is-error', isError);
     flash.style.opacity = '1';
     clearTimeout(flashTimer);
-    if (!copyPending) flashTimer = setTimeout(() => { flash.style.opacity = '0'; }, 3000);
+    if (!copyPending)
+      flashTimer = setTimeout(() => {
+        flash.style.opacity = '0';
+      }, 3000);
   }
 
   // A remembered output is a convenience; storage can be unavailable.
+  /** @returns {Output | null} */
   function load() {
     try {
       const value = localStorage.getItem(STORAGE_KEY);
-      return OUTPUTS[value] ? value : null;
+      return OUTPUTS[value] ? /** @type {Output} */ (value) : null;
     } catch {
       return null;
     }
