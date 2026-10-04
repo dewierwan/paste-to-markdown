@@ -20,6 +20,7 @@
     "jsdom",
     "markdownify",
     "Menlo",
+    "nbsp",
     "noopener",
     "normalise",
     "normalised",
@@ -37,11 +38,13 @@
     "sidepanel",
     "strikethrough",
     "summarises",
+    "texteventtarget",
     "Turndown",
     "twocol",
     "umami",
     "Umami",
     "unpunctuated",
+    "unticked",
     "vitest"
   ],
   "ignorePaths": [

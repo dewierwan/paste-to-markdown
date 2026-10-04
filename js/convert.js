@@ -118,7 +118,8 @@
     const email = cleanHtml(html, { target: 'rich', headings: 'bold', spacing });
     const plain = toText(email, 'plain');
     if (output === 'email') return { html: email, text: plain };
-    if (output === 'rich') return { html: cleanHtml(html, { target: 'rich', headings: 'keep', spacing }), text: plain };
+    // Docs keeps real checkboxes: Notion turns them into to-dos.
+    if (output === 'rich') return { html: cleanHtml(html, { target: 'rich', headings: 'keep', tasks: 'inputs', spacing }), text: plain };
     return { text: output === 'plain' ? plain : toText(email, output) };
   }
 

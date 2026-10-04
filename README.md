@@ -10,7 +10,7 @@ Every app puts its own clutter on the clipboard: Google Docs' span soup, Notion'
 |---|---|
 | Markdown | Claude, ChatGPT, GitHub, Obsidian, Notion |
 | Email & Slack | Gmail, Outlook, Slack, Teams. Headings become bold lines, since these apps have no headings |
-| Docs | Google Docs, Word, Notion, Airtable. Like Email & Slack, but keeps headings at their original level |
+| Docs | Google Docs, Word, Notion, Airtable. Like Email & Slack, but keeps headings at their original level. Checklists become real to-dos in Notion and Airtable, and square bullets in Google Docs |
 | WhatsApp | WhatsApp, Signal. Formatting becomes `*bold*`, `_italic_` and `~strike~` |
 | Plain text | LinkedIn, X, text messages, forms |
 

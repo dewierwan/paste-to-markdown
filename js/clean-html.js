@@ -6,6 +6,9 @@
 //   headings "bold" (email: Gmail, Outlook and Slack have no headings) turns
 //   headings into bold lines; headings "keep" (Docs, Notion, Airtable) keeps
 //   <h1>–<h6> at their original level.
+//   tasks "text" (email, Slack, text outputs) writes task boxes as ☐ and ☒
+//   characters; tasks "inputs" (Docs) writes checklists that Notion and
+//   Airtable turn into real ones (see DOCS_TASK_LIST_STYLE).
 // target "markdown": semantic tags (<p>, <h1>, <pre>, <input type="checkbox">)
 //   for the Markdown writer.
 //
@@ -40,12 +43,20 @@
   const LIST_STYLE = ' style="margin-top:0;margin-bottom:0"'; // as on lists Gmail creates
   const QUOTE_STYLE = ' style="margin:0 0 0 0.8ex;border-left:1px solid #ccc;padding-left:1ex"'; // Gmail's quote
   const EMPTY_LINE = '<div><br></div>';
-  // Task boxes in rich and text outputs. U+FE0E asks for the text glyph:
-  // without it Gmail, Slack and phones draw ☑ as a coloured emoji next to a
-  // plain ☐.
-  const TICKED_BOX = '\u2611\uFE0E'; // ☑ plus U+FE0E
+  // Task boxes in rich and text outputs. Not ☑: it is also an emoji, and Gmail
+  // swaps it for a coloured image even after U+FE0E (checked live 3 Oct 2026),
+  // next to a plain ☐. ☒ has no emoji form.
+  const TICKED_BOX = '☒';
   const OPEN_BOX = '☐';
   const TASK_INDENT = '&nbsp;'.repeat(4); // per nesting level, as list items indent in text output
+  // Docs output: each destination reads a different hint and ignores the
+  // others (checked live 3 Oct 2026; see tests/destinations.test.js):
+  //   Notion       <input type="checkbox"> → a real to-do
+  //   Airtable     <ul data-checked>, nesting as class="ql-indent-N" → a real checklist
+  //   Google Docs  can't make a checklist from pasted HTML, and a visible box
+  //                (character or image) would show up inside Notion's to-do,
+  //                so tasks get square bullets there, the only marker it honours
+  const DOCS_TASK_LIST_STYLE = ' style="margin-top:0;margin-bottom:0;list-style-type:square"';
 
   function cleanHtml(html, options = {}) {
     const opts = {
@@ -53,6 +64,10 @@
       headings: options.headings || 'bold',
       margins: options.spacing === 'margins',
     };
+    // Task boxes as ☐/☒ characters (email, Slack, text), or as the Docs
+    // output's checkboxes that Notion, Airtable and Google Docs each read.
+    opts.textBoxes = opts.target === 'rich' && options.tasks !== 'inputs';
+    opts.docsTasks = opts.target === 'rich' && options.tasks === 'inputs';
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const start = {
       b: false,
@@ -129,7 +144,8 @@
     if (tag === 'IMG') return renderImage(node);
     if (tag === 'INPUT') {
       if (node.type !== 'checkbox') return '';
-      if (!rich) return node.checked ? '<input type="checkbox" checked>' : '<input type="checkbox">';
+      const input = node.checked ? '<input type="checkbox" checked>' : '<input type="checkbox">';
+      if (!opts.textBoxes) return input;
       return node.checked ? `${TICKED_BOX} ` : `${OPEN_BOX} `;
     }
     if (tag === 'PRE') return renderCodeBlock(node, opts);
@@ -280,37 +296,72 @@
   function renderList(listEl, fmt, opts) {
     const items = [];
     collectListItems(listEl, 0, fmt, opts, items);
-    const rich = opts.target === 'rich';
+    if (opts.target !== 'rich') return listHtml(items, opts);
     // Email, Slack and the text outputs have no checklists, and a bullet before
-    // the box ("• ☐ Book venue") reads as two markers. A list of only tasks
-    // becomes lines that start with the box; nesting becomes indentation.
-    if (rich && items.every((item) => item.task)) {
-      const lines = items.map((item) => `<div>${TASK_INDENT.repeat(item.level)}${item.html}</div>`).join('');
-      return opts.margins ? lines : `<div data-p data-lines>${lines}</div>`;
-    }
+    // the box ("• ☐ Book venue") reads as two markers. Tasks become lines that
+    // start with the box, nesting as indentation; any ordinary items around
+    // them stay lists. Slack ignores list-style-type, so a box can't simply
+    // replace an item's bullet.
     let html = '';
-    const stack = [];
+    if (opts.textBoxes) {
+      for (const run of runs(items, (item) => item.task)) {
+        html += run[0].task ? run.map((item) => `<div>${TASK_INDENT.repeat(item.level)}${item.html}</div>`).join('') : listHtml(run, opts);
+      }
+    } else {
+      html = listHtml(items, opts);
+    }
+    // The list is spaced as one block, then its parts stand on their own.
+    return opts.margins ? html : `<div data-p data-lines>${html}</div>`;
+  }
+
+  // Splits items into runs that share key(item).
+  function runs(items, key) {
+    const out = [];
+    for (const item of items) {
+      const last = out[out.length - 1];
+      if (last && key(last[0]) === key(item)) last.push(item);
+      else out.push([item]);
+    }
+    return out;
+  }
+
+  // Rich outputs put a nested list beside its parent item, not inside it, and
+  // mark each nested item with class="ql-indent-N". That is how Gmail and
+  // Google Docs write nesting, and the only nesting the Quill editors in Slack
+  // and Airtable read: given a list inside an item, they merge the items into
+  // one line ("OneOne AOne A i"). Checked live 3 Oct 2026.
+  function listHtml(items, opts) {
+    const rich = opts.target === 'rich';
+    let html = '';
+    const stack = []; // open lists: { tag, open, liOpen }
+    const close = () => {
+      const list = stack.pop();
+      return `${list.liOpen ? '</li>' : ''}</${list.tag}>`;
+    };
+    const closeItem = (list) => {
+      if (list && list.liOpen) {
+        list.liOpen = false;
+        return '</li>';
+      }
+      return '';
+    };
     for (const item of items) {
       const level = Math.min(item.level, stack.length);
-      while (stack.length > level + 1) html += `</li></${stack.pop().tag}>`;
+      while (stack.length > level + 1) html += close();
+      if (stack.length === level + 1 && stack[level].open !== item.open) html += close();
       if (stack.length === level + 1) {
-        if (stack[level].open !== item.open) {
-          html += `</li></${stack.pop().tag}>${item.open}`;
-          stack.push(item);
-        } else {
-          html += '</li>';
-        }
+        html += closeItem(stack[level]);
       } else {
+        if (rich) html += closeItem(stack[stack.length - 1]);
         html += item.open;
-        stack.push(item);
+        stack.push({ tag: item.tag, open: item.open, liOpen: false });
       }
-      // In a list that mixes tasks and bullets, the box stands in for the bullet.
-      html += rich && item.task ? '<li style="list-style-type:none">' : '<li>';
+      html += rich && level > 0 ? `<li class="ql-indent-${level}">` : '<li>';
       html += item.html;
+      stack[stack.length - 1].liOpen = true;
     }
-    while (stack.length) html += `</li></${stack.pop().tag}>`;
-    // Mark the outer list as a spaced block (the first open tag).
-    return opts.target === 'rich' && !opts.margins ? html.replace(/^<(ul|ol)/, '<$1 data-p') : html;
+    while (stack.length) html += close();
+    return html;
   }
 
   function collectListItems(listEl, depth, fmt, opts, items) {
@@ -329,11 +380,21 @@
         const style = opts.target === 'rich' ? LIST_STYLE : '';
         const isBox = (node) =>
           node.nodeType === 1 && (node.matches('input[type="checkbox"]') || !!node.querySelector('input[type="checkbox"]'));
+        const holder = content.find(isBox);
+        const box = holder && (holder.matches('input') ? holder : holder.querySelector('input[type="checkbox"]'));
+        const task = !!box;
+        // Docs: each run of ticked or unticked tasks is its own list, marked as
+        // Airtable marks its checklists.
+        const taskList = opts.docsTasks && task;
+        const checked = taskList && box.checked ? 'true' : 'false';
+        const open = taskList
+          ? `<ul data-checked="${checked}"${DOCS_TASK_LIST_STYLE}>`
+          : `<${tag}${type ? ` type="${type}"` : ''}${style}>`;
         items.push({
           level: ariaLevel > 0 ? ariaLevel - 1 : depth,
-          task: content.some(isBox),
-          tag,
-          open: `<${tag}${type ? ` type="${type}"` : ''}${style}>`,
+          task,
+          tag: taskList ? 'ul' : tag,
+          open,
           html: html || '<br>',
         });
         for (const list of nested) collectListItems(list, depth + 1, fmt, opts, items);

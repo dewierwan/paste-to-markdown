@@ -9,7 +9,7 @@ Agenda for Thursday, with notes and a course link (https://bluedot.org/courses).
 1. Review budget
 2. Confirm venue
 
-☑︎ Send invites
+☒ Send invites
 ☐ Book room
 
 > Ship small, ship often.

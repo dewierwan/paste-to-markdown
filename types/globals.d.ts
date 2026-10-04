@@ -24,6 +24,7 @@ interface App {
 interface CleanOptions {
   target?: 'rich' | 'markdown';
   headings?: 'bold' | 'keep';
+  tasks?: 'text' | 'inputs';
   spacing?: Spacing;
 }
 

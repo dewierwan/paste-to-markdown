@@ -51,6 +51,7 @@ Every paste goes through three steps (`js/convert.js`):
 - Unit tests are in `tests/*.test.js`.
 - `tests/fixtures.test.js` runs every fixture through detection and all five outputs, and compares the results with the expected files saved next to it. `tests/fixtures/README.md` explains the format and which fixtures are hand-built.
 - Prefer a real capture (`npm run capture`) over a hand-written fixture.
+- `tests/destinations.test.js` checks what Notion, Airtable, Google Docs, Slack and Gmail make of the Docs and Email & Slack outputs. If you change either output's HTML, it fails until the real apps are re-checked: follow `tests/destinations/README.md`.
 
 ## The extension and releases
 

@@ -53,10 +53,13 @@
     let out = '';
     let n = 1;
     for (const li of listEl.children) {
+      // cleanHtml puts a nested list beside its parent item: <ul><li>One</li><ul>…
+      if (li.tagName === 'UL' || li.tagName === 'OL') {
+        out += list(li, ctx, depth + 1);
+        continue;
+      }
       if (li.tagName !== 'LI') continue;
-      // A task item in a mixed list has no bullet: its box is the marker.
-      const isTask = li.style.listStyleType === 'none';
-      const marker = isTask ? '' : listEl.tagName === 'OL' ? `${n++}. ` : ctx.wa ? '- ' : '• ';
+      const marker = listEl.tagName === 'OL' ? `${n++}. ` : ctx.wa ? '- ' : '• ';
       let text = '';
       let nested = '';
       for (const child of li.childNodes) {
