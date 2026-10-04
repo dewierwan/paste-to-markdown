@@ -1,0 +1,180 @@
+{
+  "_about": "What each output's clipboard became when pasted into real apps. tests/destinations.test.js fails if the payloads below change: re-check the apps (tests/destinations/README.md), then update this file.",
+  "checked": "2026-10-03",
+  "sample": "tests/destinations/sample.html",
+  "payloads": {
+    "rich": {
+      "text/html": "<h1>Project plan</h1><div>Intro with <b>bold</b>, <i>italic</i>, <b><i>both</i></b> and a <a href=\"https://example.com/\">link</a>.</div><h2>Bullets</h2><ul style=\"margin-top:0;margin-bottom:0\"><li>One</li><ul style=\"margin-top:0;margin-bottom:0\"><li class=\"ql-indent-1\">One A</li><ul style=\"margin-top:0;margin-bottom:0\"><li class=\"ql-indent-2\">One A i</li></ul></ul><li>Two</li></ul><h2>Steps</h2><ol style=\"margin-top:0;margin-bottom:0\"><li>First</li><li>Second</li><ol style=\"margin-top:0;margin-bottom:0\"><li class=\"ql-indent-1\">Second a</li></ol></ol><h2>Checklist</h2><ul data-checked=\"false\" style=\"margin-top:0;margin-bottom:0;list-style-type:square\"><li><input type=\"checkbox\">Book venue</li><ul data-checked=\"false\" style=\"margin-top:0;margin-bottom:0;list-style-type:square\"><li class=\"ql-indent-1\"><input type=\"checkbox\">Pay deposit</li></ul></ul><ul data-checked=\"true\" style=\"margin-top:0;margin-bottom:0;list-style-type:square\"><li><input type=\"checkbox\" checked=\"\">Draft agenda</li></ul><ul data-checked=\"false\" style=\"margin-top:0;margin-bottom:0;list-style-type:square\"><li><input type=\"checkbox\">Send invites</li></ul><h3>Mixed list</h3><ul data-checked=\"false\" style=\"margin-top:0;margin-bottom:0;list-style-type:square\"><li><input type=\"checkbox\">Task in a mixed list</li></ul><ul style=\"margin-top:0;margin-bottom:0\"><li>Plain note</li></ul><div><br></div><blockquote style=\"margin:0 0 0 0.8ex;border-left:1px solid #ccc;padding-left:1ex\">Ship small.</blockquote>",
+      "text/plain": "Project plan\n\nIntro with bold, italic, both and a link (https://example.com/).\n\nBullets\n\n• One\n    • One A\n        • One A i\n• Two\n\nSteps\n\n1. First\n2. Second\n    1. Second a\n\nChecklist\n\n☐ Book venue\n    ☐ Pay deposit\n☒ Draft agenda\n☐ Send invites\n\nMixed list\n\n☐ Task in a mixed list\n• Plain note\n\n> Ship small."
+    },
+    "email": {
+      "text/html": "<div><b>Project plan</b></div><div><br></div><div>Intro with <b>bold</b>, <i>italic</i>, <b><i>both</i></b> and a <a href=\"https://example.com/\">link</a>.</div><div><br></div><div><b>Bullets</b></div><div><br></div><ul style=\"margin-top:0;margin-bottom:0\"><li>One</li><ul style=\"margin-top:0;margin-bottom:0\"><li class=\"ql-indent-1\">One A</li><ul style=\"margin-top:0;margin-bottom:0\"><li class=\"ql-indent-2\">One A i</li></ul></ul><li>Two</li></ul><div><br></div><div><b>Steps</b></div><div><br></div><ol style=\"margin-top:0;margin-bottom:0\"><li>First</li><li>Second</li><ol style=\"margin-top:0;margin-bottom:0\"><li class=\"ql-indent-1\">Second a</li></ol></ol><div><br></div><div><b>Checklist</b></div><div><br></div><div>☐ Book venue</div><div>&nbsp;&nbsp;&nbsp;&nbsp;☐ Pay deposit</div><div>☒ Draft agenda</div><div>☐ Send invites</div><div><br></div><div><b>Mixed list</b></div><div><br></div><div>☐ Task in a mixed list</div><ul style=\"margin-top:0;margin-bottom:0\"><li>Plain note</li></ul><div><br></div><blockquote style=\"margin:0 0 0 0.8ex;border-left:1px solid #ccc;padding-left:1ex\">Ship small.</blockquote>",
+      "text/plain": "Project plan\n\nIntro with bold, italic, both and a link (https://example.com/).\n\nBullets\n\n• One\n    • One A\n        • One A i\n• Two\n\nSteps\n\n1. First\n2. Second\n    1. Second a\n\nChecklist\n\n☐ Book venue\n    ☐ Pay deposit\n☒ Draft agenda\n☐ Send invites\n\nMixed list\n\n☐ Task in a mixed list\n• Plain note\n\n> Ship small."
+    }
+  },
+  "destinations": {
+    "notion": {
+      "output": "rich",
+      "how": "live/notion.js: a paste event on an empty text block, read back from Notion's blocks",
+      "observed": [
+        "header | Project plan",
+        "text | Intro with bold, italic, both and a link. [bold:bold] [italic:italic] [bold+italic:both] [link:link]",
+        "sub_header | Bullets",
+        "bulleted_list | One",
+        "  bulleted_list | One A",
+        "    bulleted_list | One A i",
+        "bulleted_list | Two",
+        "sub_header | Steps",
+        "numbered_list | First",
+        "numbered_list | Second",
+        "  numbered_list | Second a",
+        "sub_header | Checklist",
+        "to_do [ ] | Book venue",
+        "  to_do [ ] | Pay deposit",
+        "to_do [x] | Draft agenda",
+        "to_do [ ] | Send invites",
+        "sub_sub_header | Mixed list",
+        "to_do [ ] | Task in a mixed list",
+        "bulleted_list | Plain note",
+        "quote | Ship small."
+      ],
+      "notes": [
+        "To-dos need <input type=\"checkbox\"> as the item's first content. A ☐ character or a box image inside the item stays in the to-do (images become image blocks).",
+        "Notion builds blocks only when text/plain has the same lines; a one-line text/plain makes it paste everything as inline text.",
+        "Dewi's own cmd+V of a real Airtable checklist through the Docs output also gave real to-dos (3 Oct 2026)."
+      ]
+    },
+    "airtable": {
+      "output": "rich",
+      "how": "live/quill.js in a rich text field: the field's own Quill 1 clipboard, then saved and read back through the API",
+      "observed": [
+        "h1 | Project plan",
+        "Intro with [bold:bold], [italic:italic], [bold+italic:both] and a [link:link].",
+        "h2 | Bullets",
+        "bullet | One",
+        "bullet, indent 1 | One A",
+        "bullet, indent 2 | One A i",
+        "bullet | Two",
+        "h2 | Steps",
+        "ordered | First",
+        "ordered | Second",
+        "ordered, indent 1 | Second a",
+        "h2 | Checklist",
+        "unchecked | Book venue",
+        "unchecked, indent 1 | Pay deposit",
+        "checked | Draft agenda",
+        "unchecked | Send invites",
+        "h3 | Mixed list",
+        "unchecked | Task in a mixed list",
+        "bullet | Plain note",
+        "",
+        "quote | Ship small."
+      ],
+      "notes": [
+        "Real checklists come only from <ul data-checked>; checkbox inputs, images and ☐ characters become plain bullets.",
+        "Nesting comes only from class=\"ql-indent-N\" on items whose nested list sits beside, not inside, the parent item; a list inside a nested item lands one level too shallow."
+      ]
+    },
+    "google-docs": {
+      "output": "rich",
+      "how": "live/google-docs.js, read back with the Docs API and by eye",
+      "observed": [
+        "Heading 1 | Project plan",
+        "Normal | Intro with [bold:bold], [italic:italic], [bold+italic:both] and a [link:link].",
+        "Heading 2 | Bullets",
+        "bullet | One",
+        "bullet, level 2 | One A",
+        "bullet, level 3 | One A i",
+        "bullet | Two",
+        "Heading 2 | Steps",
+        "numbered | First",
+        "numbered | Second",
+        "numbered, level 2 | Second a",
+        "Heading 2 | Checklist",
+        "square bullet | Book venue",
+        "square bullet, level 2 | Pay deposit",
+        "square bullet | Draft agenda",
+        "square bullet | Send invites",
+        "Heading 3 | Mixed list",
+        "square bullet | Task in a mixed list",
+        "bullet | Plain note",
+        "",
+        "Normal | Ship small."
+      ],
+      "notes": [
+        "Google Docs makes native checklists only from its own private clipboard data. Tried and failed: <input type=\"checkbox\">, role=\"checkbox\" aria-checked (with and without the docs-internal-guid wrapper and Docs' own tick-box image), list-style-type strings, and Docs' private data written by another source.",
+        "So tasks get square bullets, the one marker Docs honours. A ticked item looks like an unticked one."
+      ]
+    },
+    "slack": {
+      "output": "email",
+      "how": "live/quill.js in the message box (no recipient): Slack's own Quill clipboard, nothing inserted",
+      "observed": [
+        "[bold:Project plan]",
+        "",
+        "Intro with [bold:bold], [italic:italic], [bold+italic:both] and a [link:link].",
+        "",
+        "[bold:Bullets]",
+        "",
+        "bullet | One",
+        "bullet, indent 1 | One A",
+        "bullet, indent 2 | One A i",
+        "bullet | Two",
+        "",
+        "[bold:Steps]",
+        "",
+        "ordered | First",
+        "ordered | Second",
+        "ordered, indent 1 | Second a",
+        "",
+        "[bold:Checklist]",
+        "",
+        "☐ Book venue",
+        "    ☐ Pay deposit",
+        "☒ Draft agenda",
+        "☐ Send invites",
+        "",
+        "[bold:Mixed list]",
+        "",
+        "☐ Task in a mixed list",
+        "bullet | Plain note",
+        "",
+        "quote | Ship small."
+      ],
+      "notes": [
+        "Slack ignores list-style-type, so a task item inside a list keeps its bullet: tasks are written as lines instead.",
+        "A list nested inside an item merges the items into one line (\"OneOne AOne A i\")."
+      ]
+    },
+    "gmail": {
+      "output": "email",
+      "how": "a paste event in a new message's body (left as a draft), read back from the compose DOM",
+      "observed": [
+        "[bold:Project plan]",
+        "Intro with [bold:bold], [italic:italic], [bold+italic:both] and a [link:link].",
+        "[bold:Bullets]",
+        "bullet | One",
+        "bullet, level 2 | One A",
+        "bullet, level 3 | One A i",
+        "bullet | Two",
+        "[bold:Steps]",
+        "numbered | First",
+        "numbered | Second",
+        "numbered, level 2 | Second a",
+        "[bold:Checklist]",
+        "☐ Book venue",
+        "    ☐ Pay deposit",
+        "☒ Draft agenda",
+        "☐ Send invites",
+        "[bold:Mixed list]",
+        "☐ Task in a mixed list",
+        "bullet | Plain note",
+        "quote | Ship small."
+      ],
+      "notes": [
+        "Gmail swaps ☑ for a coloured emoji image even with U+FE0E; ☒ stays text.",
+        "Lists nested inside items get uneven spacing in Gmail (gaps of 21, 29, 21 and 46px); nested lists beside their parent item get an even 29px at every level."
+      ]
+    }
+  }
+}

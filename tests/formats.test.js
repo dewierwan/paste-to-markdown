@@ -35,9 +35,10 @@ describe('Google Docs → email', () => {
         '<div><br></div>',
         '<div><b>Bold </b><a href="https://example.com/page?x=1"><b>bold link</b></a><u> underlined</u><s> struck</s></div>',
         '<div><br></div>',
-        '<ul style="margin-top:0;margin-bottom:0"><li>First bullet<ul style="margin-top:0;margin-bottom:0"><li>Nested <b>bullet</b></li></ul></li><li>Second bullet</li></ul>',
+        // Nested lists sit beside their parent item, as Gmail writes them.
+        '<ul style="margin-top:0;margin-bottom:0"><li>First bullet</li><ul style="margin-top:0;margin-bottom:0"><li class="ql-indent-1">Nested <b>bullet</b></li></ul><li>Second bullet</li></ul>',
         '<div><br></div>',
-        '<ol style="margin-top:0;margin-bottom:0"><li>Step one</li><li>Step two<ol type="a" style="margin-top:0;margin-bottom:0"><li>Sub-step</li></ol></li></ol>',
+        '<ol style="margin-top:0;margin-bottom:0"><li>Step one</li><li>Step two</li><ol type="a" style="margin-top:0;margin-bottom:0"><li class="ql-indent-1">Sub-step</li></ol></ol>',
         '<div><br></div>',
         '<div>Red highlighted text<sup>2</sup></div>',
         '<div><br></div>',
@@ -106,8 +107,8 @@ describe('Markdown → other outputs', () => {
     expect(w.convertClip({ html: '', text: md }, 'markdown', 'email').html).toBe(
       '<div><b>Plan</b></div><div><br></div>' +
         '<div>Ship <b>the program</b> by <i>15 Nov</i>. See <a href="https://example.com">doc</a>.</div><div><br></div>' +
-        '<ul style="margin-top:0;margin-bottom:0"><li>One</li><li>Two with <font face="monospace">code</font>' +
-        '<ul style="margin-top:0;margin-bottom:0"><li>Nested</li></ul></li></ul><div><br></div>' +
+        '<ul style="margin-top:0;margin-bottom:0"><li>One</li><li>Two with <font face="monospace">code</font></li>' +
+        '<ul style="margin-top:0;margin-bottom:0"><li class="ql-indent-1">Nested</li></ul></ul><div><br></div>' +
         '<div>Thanks,<br>Dewi</div>',
     );
   });
@@ -158,9 +159,11 @@ describe('Quill lists (Airtable rich text)', () => {
   it('rebuilds nesting from ql-indent classes in rich text', () => {
     const out = w.convertClip({ html: html(), text: '' }, 'rich', 'email').html;
     expect(out).toContain(
-      '<li>First topic<ul style="margin-top:0;margin-bottom:0"><li>detail one</li><li>detail <b>two</b></li></ul></li>',
+      '<li>First topic</li><ul style="margin-top:0;margin-bottom:0"><li class="ql-indent-1">detail one</li><li class="ql-indent-1">detail <b>two</b></li></ul>',
     );
-    expect(out).toContain('<li>detail three<ul style="margin-top:0;margin-bottom:0"><li>deeper still</li></ul></li>');
+    expect(out).toContain(
+      '<li class="ql-indent-1">detail three</li><ul style="margin-top:0;margin-bottom:0"><li class="ql-indent-2">deeper still</li></ul>',
+    );
   });
 
   it('indents sub-bullets in plain text', () => {
@@ -210,7 +213,7 @@ describe('Word lists', () => {
   it('reads numbers and letters as numbered lists', () => {
     const html = `${item(1, 'l1', '1.', 'First')}${item(2, 'l1', 'a.', 'Sub')}${item(1, 'l1', '2.', 'Second')}`;
     expect(w.convertClip({ html, text: '' }, 'rich', 'email').html).toBe(
-      '<ol style="margin-top:0;margin-bottom:0"><li>First<ol type="a" style="margin-top:0;margin-bottom:0"><li>Sub</li></ol></li><li>Second</li></ol>',
+      '<ol style="margin-top:0;margin-bottom:0"><li>First</li><ol type="a" style="margin-top:0;margin-bottom:0"><li class="ql-indent-1">Sub</li></ol><li>Second</li></ol>',
     );
   });
 });
@@ -219,7 +222,7 @@ describe('task lists', () => {
   it('keeps Quill checklists in every output', () => {
     const html = '<ul data-checked="true"><li>done</li></ul><ul data-checked="false"><li>todo</li></ul>';
     expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] done\n- [ ] todo');
-    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('☑\uFE0E done\n☐ todo');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('☒ done\n☐ todo');
   });
 
   it('starts each task line with its box instead of a bullet', () => {
@@ -230,21 +233,24 @@ describe('task lists', () => {
     expect(w.convertClip({ html, text: '' }, 'rich', 'whatsapp').text).toBe('☐ Book venue\n    ☐ Pay deposit\n\nAfter');
   });
 
-  it('keeps bullets on the ordinary items of a mixed list', () => {
+  it('splits a mixed list: tasks as box lines, ordinary items as a list', () => {
+    // Slack ignores list-style-type, so a box can't replace an item's bullet.
     const html = '<ol><li data-list="unchecked">todo</li><li data-list="bullet">note</li></ol>';
     const email = w.convertClip({ html, text: '' }, 'rich', 'email');
-    expect(email.html).toContain('<li style="list-style-type:none">☐ todo</li><li>note</li>');
+    expect(email.html).toBe('<div>☐ todo</div><ul style="margin-top:0;margin-bottom:0"><li>note</li></ul>');
     expect(email.text).toBe('☐ todo\n• note');
   });
 
-  it('keeps real checkboxes in Docs, which Notion turns into to-dos', () => {
+  it('writes Docs tasks as real checkboxes in Airtable-style checklists', () => {
     const html = '<ul data-checked="false"><li>todo</li><li class="ql-indent-1">sub</li></ul><ul data-checked="true"><li>done</li></ul>';
     const docs = w.convertClip({ html, text: '' }, 'rich', 'rich');
+    const list = (checked) => `<ul data-checked="${checked}" style="margin-top:0;margin-bottom:0;list-style-type:square">`;
     expect(docs.html).toBe(
-      '<ul style="margin-top:0;margin-bottom:0"><li><input type="checkbox">todo<ul style="margin-top:0;margin-bottom:0"><li><input type="checkbox">sub</li></ul></li><li><input type="checkbox" checked="">done</li></ul>',
+      `${list(false)}<li><input type="checkbox">todo</li>${list(false)}<li class="ql-indent-1"><input type="checkbox">sub</li></ul></ul>` +
+        `${list(true)}<li><input type="checkbox" checked="">done</li></ul>`,
     );
     // Notion reads a one-line text/plain as inline text, so the lines matter.
-    expect(docs.text).toBe('☐ todo\n    ☐ sub\n☑︎ done');
+    expect(docs.text).toBe('☐ todo\n    ☐ sub\n☒ done');
   });
 
   it('reads Quill 2 checked and unchecked items', () => {
@@ -278,7 +284,7 @@ describe('Notion', () => {
   it('turns to-dos written as text into task items', () => {
     const html = '<ul>\n<li>[x]  Send invites</li>\n<li>[ ]  Book <b>room</b></li>\n</ul>';
     expect(w.convertClip({ html, text: '' }, 'rich', 'markdown').text).toBe('- [x] Send invites\n- [ ] Book **room**');
-    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('☑\uFE0E Send invites\n☐ Book room');
+    expect(w.convertClip({ html, text: '' }, 'rich', 'plain').text).toBe('☒ Send invites\n☐ Book room');
   });
 
   it('reads newlines between tags as spaces, not line breaks', () => {

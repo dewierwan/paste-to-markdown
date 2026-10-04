@@ -44,6 +44,11 @@ export default [
       'no-unused-vars': ['error', { caughtErrors: 'none' }],
     },
   },
+  // Snippets pasted into the console of a real app (tests/destinations/README.md).
+  {
+    files: ['tests/destinations/live/*.js'],
+    languageOptions: { sourceType: 'script', globals: globals.browser },
+  },
   // The PDF reader marks bold runs with \u0001 and \u0002 while it works.
   { files: ['js/from-pdf.js'], rules: { 'no-control-regex': 'off' } },
 ];
