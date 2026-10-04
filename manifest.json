@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Paste Into",
-  "version": "1.0.3",
-  "description": "Paste from Google Docs, Notion, Word, Claude or anywhere. Get Markdown, email and Slack text, Docs, WhatsApp or plain text.",
+  "version": "1.0.4",
+  "description": "Paste formatted text and get it back as Markdown, rich text or plain text, copied for you.",
   "homepage_url": "https://pasteinto.com/",
   "icons": {
     "16": "icons/icon-16.png",
