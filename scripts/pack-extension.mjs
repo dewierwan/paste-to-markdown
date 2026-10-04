@@ -24,12 +24,6 @@ export function extensionFiles() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { version } = JSON.parse(read('manifest.json'));
-  // A released version can't be uploaded again: the Chrome Web Store needs a higher one.
-  const released = execFileSync('git', ['tag', '--list', `v${version}`], { cwd: root, encoding: 'utf-8' }).trim();
-  if (released) {
-    console.error(`v${version} is already released: bump version in manifest.json`);
-    process.exit(1);
-  }
   const files = extensionFiles();
   const missing = files.filter((path) => !existsSync(resolve(root, path)));
   if (missing.length) {
@@ -40,5 +34,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const zip = join('dist', `pasteinto-extension-${version}.zip`);
   rmSync(resolve(root, zip), { force: true });
   execFileSync('zip', ['-X', '-q', zip, ...files], { cwd: root });
-  console.log(`${zip} (${files.length} files). After uploading, tag the release: git tag v${version} && git push origin v${version}`);
+  console.log(`${zip} (${files.length} files)`);
 }

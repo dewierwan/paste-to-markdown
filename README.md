@@ -34,9 +34,8 @@ To try it, open `chrome://extensions`, turn on Developer mode, choose Load unpac
 To release a new version:
 
 1. Bump `version` in `manifest.json`.
-2. Run `npm run pack:extension`. It writes the Chrome Web Store upload to `dist/`, and refuses if that version already has a tag.
+2. Run `npm run pack:extension`. It writes the Chrome Web Store upload to `dist/`. The store rejects a version that isn't higher than the live one.
 3. Upload the zip to the Chrome Web Store.
-4. Tag the release: `git tag v1.2.3 && git push origin v1.2.3`. CI checks the tag matches `manifest.json`, runs the tests and attaches the zip to a GitHub release.
 
 ## Privacy
 
